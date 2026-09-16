@@ -18,6 +18,8 @@ This plan includes the independent review's corrections (§ "Rules locked" below
 
 ## Rules locked (read once, both of you)
 
+> **Contract v2 (13:10), agreed with B's agent:** `lib/types.ts` now also defines the API contract: `AnswerResponse` (answer + source and passage maps), typed `Snapshot`, `revision` + `reply_stale`, `UpdateAnswerRequest` (reviews, conflict decisions, not-found decisions), and structured `ApproveBlocker`s. **B owns `lib/reply.ts` and `lib/review-policy.ts` (pure, tested); A imports them on the server.** One requirement per finding. Checkpoint expectations (a "not found" cost, a not-used source) are hypotheses to verify, never to fake.
+
 1. **Three separate collections:** official sources · officer notes · previous answers. **Only official sources are evidence.** Notes and previous answers never enter the search index as evidence.
 2. **Source checks ≠ legal applicability.** Code checks territory, dates, status and version, labelled **"Broncontrole geslaagd"**, never "van toepassing".
 3. **Topic ≠ territory.** A Province of Antwerp document **passes** the territory check for Schoten. If it's irrelevant, that's because search didn't pick it, not because of territory.
@@ -184,7 +186,7 @@ Result: any fail → `niet_gebruikt`; else any unknown → `onzeker`; else `geco
 4. `lib/ground.ts` → `ground(raw, candidates, verdicts): Finding[]`:
    - drop citations whose `passage_id` isn't in the candidates
    - drop citations failing `quoteInPassage`
-   - drop `condition` if its quote fails `quoteInPassage`
+   - condition quote fails `quoteInPassage` → **keep the condition** with `quote_checked: false` and make the finding `onzeker` ("Voorwaarde niet teruggevonden in de bron"). Never remove a restriction
    - no citations left → finding removed, its sub-question goes to `not_found`
    - status: `conflict_with` present → `tegenstrijdig` · any cited source `onzeker`, or `numbersGrounded` false → `onzeker` (with reasons) · otherwise → `citaat_gecontroleerd`
    - `review = 'open'` for every finding

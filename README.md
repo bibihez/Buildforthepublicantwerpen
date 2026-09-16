@@ -27,10 +27,12 @@ npm run seed       # load sources into the local SQLite db (after step 1)
 
 ## Who owns what
 
+**A = bibihez (engine + server)** · **B = teammate (officer workflow + screens)**
+
 | Owner | Files |
 |---|---|
-| **A · engine** | `lib/db.ts` `lib/ingest.ts` `lib/verdict.ts` `lib/search.ts` `lib/anchor.ts` `lib/numbers.ts` `lib/llm.ts` `lib/ground.ts` `lib/snapshot.ts` `lib/precedent.ts` · `app/api/**` · `scripts/**` · `prompts/**` · `config/**` · `data/seed/sources.json` · `tests/**` · `package.json` |
-| **B · screens** | `app/page.tsx` `app/historiek/**` `app/bronnen/**` · `components/**` · `lib/reply.ts` · `lib/api-client.ts` · `data/seed/fixture-answer.json` |
-| **Shared — announce every change** | `lib/types.ts` |
+| **A** | `app/api/**` `app/files/**` · `lib/db.ts` `lib/ingest.ts` `lib/verdict.ts` `lib/search.ts` `lib/anchor.ts` `lib/numbers.ts` `lib/ground.ts` `lib/llm.ts` `lib/snapshot.ts` `lib/precedent.ts` · `prompts/**` `config/**` `scripts/**` `tests/` (engine tests) · `data/seed/sources.json` · `package.json` `package-lock.json` (**only A adds dependencies**) |
+| **B** | `app/page.tsx` `app/layout.tsx` `app/globals.css` `app/bronnen/**` `app/historiek/**` · `components/**` · `lib/client.ts` · `lib/reply.ts` + `lib/review-policy.ts` (pure, tested, **A imports them on the server**) · `data/seed/fixture-*` |
+| **Shared: message the other person before committing a change** | `lib/types.ts` (types + API contract) |
 
 Commit small, `git pull --rebase` before every push, roughly every 20 minutes.
