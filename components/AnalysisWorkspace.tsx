@@ -6,6 +6,7 @@ import { buildReply } from "@/lib/reply";
 import { getApproveBlockers } from "@/lib/review-policy";
 import type {
   AnswerResponse,
+  ApiError,
   ApproveBlocker,
   Casus,
   Fact,
@@ -20,6 +21,7 @@ import {
 import { ApproveBar } from "./ApproveBar";
 import { CaseCard } from "./CaseCard";
 import { EvidencePanel } from "./EvidencePanel";
+import { FallbackPassages } from "./FallbackPassages";
 import { FindingList } from "./FindingList";
 import type { FindingReviewUpdate } from "./ReviewActions";
 import { NotUsedList } from "./NotUsedList";
@@ -75,6 +77,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [serverBlockers, setServerBlockers] = useState<ApproveBlocker[]>([]);
+  const [fallback, setFallback] = useState<ApiError["fallback"]>(undefined);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -91,12 +94,14 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       : response.answer.findings[0]?.id || null);
     if (resetReply) setReplyText(response.answer.reply_text || buildReply(response));
     setServerBlockers([]);
+    setFallback(undefined);
     setError(null);
   };
 
   const showError = (caught: unknown) => {
     if (caught instanceof ClientError) {
       setError(caught.message);
+      setFallback(caught.details?.fallback);
       if (caught.details?.blockers) setServerBlockers(caught.details.blockers);
       return;
     }
@@ -126,6 +131,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setLoading(true);
     setLoadingStep(0);
     setError(null);
+    setFallback(undefined);
     setNotice(null);
     try {
       if (fixtureMode) {
@@ -146,6 +152,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     if (!data || data.answer.status === "goedgekeurd") return;
     setLoading(true);
     setError(null);
+    setFallback(undefined);
     try {
       const response = fixtureMode
         ? localUpdate(data, { revision: data.answer.revision, ...patch })
@@ -164,6 +171,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setLoading(true);
     setLoadingStep(0);
     setError(null);
+    setFallback(undefined);
     try {
       if (fixtureMode) {
         const response = {
@@ -223,6 +231,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     if (!data || !reviewer.trim()) return;
     setLoading(true);
     setError(null);
+    setFallback(undefined);
     try {
       if (fixtureMode) {
         const at = new Date().toISOString();
@@ -287,6 +296,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setReplyText("");
     setNotice("Live API-modus actief.");
     setError(null);
+    setFallback(undefined);
   };
 
   return (
@@ -316,6 +326,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           {!fixtureMode && process.env.NODE_ENV !== "production" ? <span> De ontwikkelfixture kan alleen handmatig worden geopend.</span> : null}
         </div>
       ) : null}
+      {fallback ? <FallbackPassages fallback={fallback} /> : null}
 
       <section className="question-panel panel">
         <label htmlFor="question">Vraag van de ondernemer</label>

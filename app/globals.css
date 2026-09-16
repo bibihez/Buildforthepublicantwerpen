@@ -206,6 +206,12 @@ label input, label select, label textarea { display: block; margin-top: 5px; fon
 .verdict-line span { display: inline-grid; width: 19px; height: 19px; margin-right: 5px; place-items: center; border-radius: 50%; background: #dcefe8; }
 
 .not-used-panel, .reply-panel { margin-top: 16px; padding: 18px; }
+.fallback-panel { margin: 0 0 16px; padding: 18px; }
+.fallback-panel > .hint { margin-bottom: 14px; }
+.fallback-list { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; counter-reset: fallback; }
+.fallback-list > li { padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfc; counter-increment: fallback; }
+.fallback-list > li:not(.error-banner)::before { content: counter(fallback); display: inline-grid; float: left; width: 23px; height: 23px; margin: 0 9px 5px 0; place-items: center; border-radius: 50%; background: var(--primary-pale); color: var(--primary-dark); font-size: 12px; font-weight: 800; }
+.fallback-list .passage-text { clear: both; max-height: 150px; }
 .not-used-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 9px; }
 .not-used-list article { padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #f8faf9; }
 .not-used-list p { margin: 3px 0; color: var(--muted); }
