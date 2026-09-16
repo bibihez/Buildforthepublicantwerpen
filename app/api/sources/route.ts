@@ -4,7 +4,7 @@ import { addSource, listSourceItems, parseUploadFields } from '@/lib/sources';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  return Response.json({ sources: listSourceItems() });
+  return Response.json({ sources: await listSourceItems() });
 }
 
 /** multipart: file + SourceUploadFields → saved, ingested, indexed. A duplicate file is refused. */

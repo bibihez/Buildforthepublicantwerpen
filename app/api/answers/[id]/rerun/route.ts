@@ -8,7 +8,7 @@ export const maxDuration = 300;
 /** Same pipeline without AI ①: the officer's case (facts, date, subquestions) is taken as given. */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
-  const existing = getAnswer(id);
+  const existing = await getAnswer(id);
   if (!existing) return Response.json({ error: 'Answer not found' } satisfies ApiError, { status: 404 });
   if (existing.status === 'goedgekeurd') {
     return Response.json({ error: 'This answer is approved. Create a new version.' } satisfies ApiError, { status: 409 });
@@ -27,12 +27,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   }
   try {
     const answer = await analyse({ ...body.casus, municipality: existing.casus.municipality }, existing);
-    return Response.json(toResponse(answer));
+    return Response.json(await toResponse(answer));
   } catch (err) {
     console.error('POST /api/answers/[id]/rerun failed', err);
     let fallback: ApiError['fallback'];
     try {
-      fallback = fallbackFor(body.casus);
+      fallback = await fallbackFor(body.casus);
     } catch {
       fallback = undefined;
     }

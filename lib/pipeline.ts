@@ -15,8 +15,8 @@ let index: SearchIndex | null = null;
 export function invalidateIndex(): void {
   index = null;
 }
-function getIndex(): SearchIndex {
-  if (!index) index = buildIndex(listPassages());
+async function getIndex(): Promise<SearchIndex> {
+  if (!index) index = buildIndex(await listPassages());
   return index;
 }
 
@@ -47,10 +47,10 @@ function passageForModel(p: Passage, sources: Map<string, Source>): string {
 
 /** Source checks → search → AI ② → grounding. `casus` is taken as given (no AI ①). */
 export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise<Answer> {
-  const sources = listSources();
+  const sources = await listSources();
   const sourceMap = new Map(sources.map((s) => [s.id, s]));
-  const verdicts = verdictsFor(sources, casus, config, listSourceEvents());
-  const { candidates, notUsed } = findCandidates(casus, verdicts, getIndex());
+  const verdicts = verdictsFor(sources, casus, config, await listSourceEvents());
+  const { candidates, notUsed } = findCandidates(casus, verdicts, await getIndex());
 
   const user = [
     `## Case`,
@@ -90,11 +90,11 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
     snapshot: null,
   };
   // After the findings exist, and never given to the AI.
-  const precedent = findPrecedent(casus.question, listAnswers(), { excludeId: answer.id });
+  const precedent = findPrecedent(casus.question, await listAnswers(), { excludeId: answer.id });
   const passageSource = new Map(candidates.map((p) => [p.id, p.source_id]));
   answer.precedent = precedent ? compare(precedent, answer, sources, (id) => passageSource.get(id)) : null;
   answer.reply_text = buildReply(answer);
-  saveAnswer(answer);
+  await saveAnswer(answer);
   return answer;
 }
 
@@ -104,21 +104,21 @@ export async function createAnswer(question: string, date?: string): Promise<Ans
 }
 
 /** The answer plus every source and passage the screens need. */
-export function toResponse(answer: Answer): AnswerResponse {
+export async function toResponse(answer: Answer): Promise<AnswerResponse> {
   const sources: Record<string, Source> = {};
-  for (const s of listSources()) sources[s.id] = s;
+  for (const s of await listSources()) sources[s.id] = s;
   const ids = new Set<string>([...answer.candidates, ...passageIdsOf(answer)]);
   const passages: Record<string, Passage> = {};
   for (const id of ids) {
-    const p = getPassage(id);
+    const p = await getPassage(id);
     if (p) passages[id] = p;
   }
   return { answer, sources, passages };
 }
 
 /** When an AI call fails: search results from checked sources only, so the officer can still read the evidence. */
-export function fallbackFor(casus: Pick<Casus, 'question'> & Partial<Casus>): NonNullable<ApiError['fallback']> {
-  const sources = listSources();
+export async function fallbackFor(casus: Pick<Casus, 'question'> & Partial<Casus>): Promise<NonNullable<ApiError['fallback']>> {
+  const sources = await listSources();
   const full: Casus = {
     question: casus.question,
     municipality: config.municipality,
@@ -127,8 +127,8 @@ export function fallbackFor(casus: Pick<Casus, 'question'> & Partial<Casus>): No
     subquestions: casus.subquestions ?? [],
     facts: casus.facts ?? [],
   };
-  const verdicts = verdictsFor(sources, full, config, listSourceEvents());
-  const { candidates } = findCandidates(full, verdicts, getIndex());
+  const verdicts = verdictsFor(sources, full, config, await listSourceEvents());
+  const { candidates } = findCandidates(full, verdicts, await getIndex());
   return {
     candidate_ids: candidates.map((p) => p.id),
     sources: Object.fromEntries(sources.map((s) => [s.id, s])),

@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 export async function GET() {
-  return Response.json({ answers: listAnswers() });
+  return Response.json({ answers: await listAnswers() });
 }
 
 export async function POST(request: Request) {
@@ -23,19 +23,19 @@ export async function POST(request: Request) {
   }
   try {
     const answer = await createAnswer(question, body.date);
-    return Response.json(toResponse(answer));
+    return Response.json(await toResponse(answer));
   } catch (err) {
     console.error('POST /api/answers failed', err);
     return Response.json(
-      { error: 'No findings were produced. The retrieved passages are shown below.', fallback: safeFallback({ question, date: body.date }) } satisfies ApiError,
+      { error: 'No findings were produced. The retrieved passages are shown below.', fallback: await safeFallback({ question, date: body.date }) } satisfies ApiError,
       { status: 502 },
     );
   }
 }
 
-function safeFallback(casus: Parameters<typeof fallbackFor>[0]): ApiError['fallback'] {
+async function safeFallback(casus: Parameters<typeof fallbackFor>[0]): Promise<ApiError['fallback']> {
   try {
-    return fallbackFor(casus);
+    return await fallbackFor(casus);
   } catch (err) {
     console.error('fallback search failed', err);
     return undefined;

@@ -4,7 +4,7 @@ import { similarity } from './precedent';
 import { RequestError } from './snapshot';
 import type { CreateNoteRequest, Note } from './types';
 
-export function createNote(req: CreateNoteRequest): Note {
+export async function createNote(req: CreateNoteRequest): Promise<Note> {
   const topic = req.topic?.trim();
   const text = req.text?.trim();
   const author = req.author?.trim();
@@ -12,13 +12,13 @@ export function createNote(req: CreateNoteRequest): Note {
   if (!text) throw new RequestError('Text is missing', 400);
   if (!author) throw new RequestError('Officer name is missing', 400);
   const note: Note = { id: randomUUID(), topic, text, author, created_at: new Date().toISOString(), dictated: !!req.dictated };
-  saveNote(note);
+  await saveNote(note);
   return note;
 }
 
 /** With a question: only notes that share words with it, most relevant first. Without: all, newest first. */
-export function findNotes(question?: string | null): Note[] {
-  const notes = listNotes();
+export async function findNotes(question?: string | null): Promise<Note[]> {
+  const notes = await listNotes();
   if (!question?.trim()) return notes;
   return notes
     .map((n) => ({ n, score: similarity(question, `${n.topic} ${n.text}`) }))

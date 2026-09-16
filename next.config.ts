@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Prompts are read from disk at runtime; make sure deployed functions include them.
+  outputFileTracingIncludes: {
+    "/api/**": ["./prompts/**"],
+  },
 };
 
 export default nextConfig;

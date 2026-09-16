@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import fs from 'node:fs';
 import path from 'node:path';
 import { addSourceEvent, countPassagesBySource, findSourceBySha, getSource, insertPassages, listSourceEvents, listSources, upsertSource } from './db';
 import { ingestPdf, sha256 } from './ingest';
+import { saveFile } from './storage';
 import { invalidateIndex } from './pipeline';
 import { RequestError } from './snapshot';
 import type { Level, Nature, Source, SourceListItem, SourceUploadFields } from './types';
@@ -11,10 +11,10 @@ const LEVELS: Level[] = ['federaal', 'vlaams', 'provinciaal', 'gemeentelijk'];
 const NATURES: Nature[] = ['wetgeving', 'richtlijn'];
 const STATUSES: Source['status'][] = ['van_kracht', 'historisch', 'onbekend'];
 
-export function listSourceItems(): SourceListItem[] {
-  const counts = countPassagesBySource();
-  const events = listSourceEvents();
-  return listSources()
+export async function listSourceItems(): Promise<SourceListItem[]> {
+  const counts = await countPassagesBySource();
+  const events = await listSourceEvents();
+  return (await listSources())
     .map((s) => ({ ...s, passage_count: counts[s.id] ?? 0, events: events.filter((e) => e.source_id === s.id) }))
     .sort((a, b) => a.short_title.localeCompare(b.short_title, 'nl'));
 }
@@ -68,45 +68,44 @@ export function parseUploadFields(form: FormData): SourceUploadFields {
 export async function addSource(fields: SourceUploadFields, fileName: string, data: Uint8Array): Promise<{ source: Source; passages: number }> {
   if (!fileName.toLowerCase().endsWith('.pdf')) throw new RequestError('PDF files only', 400);
   const sha = sha256(data);
-  const dup = findSourceBySha(sha);
+  const dup = await findSourceBySha(sha);
   if (dup) throw new RequestError(`This version already exists: ${dup.short_title}`, 409);
 
-  const old = fields.supersedes_id ? getSource(fields.supersedes_id) : null;
+  const old = fields.supersedes_id ? await getSource(fields.supersedes_id) : null;
   if (fields.supersedes_id && !old) throw new RequestError('The source being superseded does not exist', 400);
 
   const { passages } = await ingestPdf(data, 'pending');
   if (passages.length === 0) throw new RequestError('No text found in the PDF (is it a scanned document?)', 400);
 
   let id = slug(fields.short_title);
-  if (getSource(id)) id = `${id}-${sha.slice(0, 6)}`;
+  if (await getSource(id)) id = `${id}-${sha.slice(0, 6)}`;
 
-  const rel = path.join('data', 'files', 'uploads', `${sha.slice(0, 8)}-${path.basename(fileName).replace(/[^\w.-]+/g, '_')}`);
-  fs.mkdirSync(path.dirname(path.join(process.cwd(), rel)), { recursive: true });
-  fs.writeFileSync(path.join(process.cwd(), rel), data);
+  const rel = path.posix.join('data', 'files', 'uploads', `${sha.slice(0, 8)}-${path.basename(fileName).replace(/[^\w.-]+/g, '_')}`);
+  await saveFile(rel, data);
 
   const now = new Date().toISOString();
   const { supersedes_id: _s, ...rest } = fields;
   const source: Source = { ...rest, id, active: true, superseded_by: null, file_path: rel, sha256: sha, added_at: now };
-  upsertSource(source);
-  insertPassages(passages.map((p) => ({ ...p, source_id: id })));
-  addSourceEvent({ id: randomUUID(), source_id: id, at: now, by: fields.added_by, type: 'toegevoegd', reason: null });
+  await upsertSource(source);
+  await insertPassages(passages.map((p) => ({ ...p, source_id: id })));
+  await addSourceEvent({ id: randomUUID(), source_id: id, at: now, by: fields.added_by, type: 'toegevoegd', reason: null });
 
   if (old) {
-    upsertSource({ ...old, superseded_by: id });
-    addSourceEvent({ id: randomUUID(), source_id: old.id, at: now, by: fields.added_by, type: 'vervangen', reason: `Superseded by ${source.short_title}` });
+    await upsertSource({ ...old, superseded_by: id });
+    await addSourceEvent({ id: randomUUID(), source_id: old.id, at: now, by: fields.added_by, type: 'vervangen', reason: `Superseded by ${source.short_title}` });
   }
   invalidateIndex();
   return { source, passages: passages.length };
 }
 
-export function setActive(id: string, active: boolean, reason: string, by: string): Source {
-  const source = getSource(id);
+export async function setActive(id: string, active: boolean, reason: string, by: string): Promise<Source> {
+  const source = await getSource(id);
   if (!source) throw new RequestError('Source not found', 404);
   if (!reason?.trim()) throw new RequestError('Provide a reason', 400);
   if (!by?.trim()) throw new RequestError('Officer name is missing', 400);
   const next = { ...source, active };
-  upsertSource(next);
-  addSourceEvent({
+  await upsertSource(next);
+  await addSourceEvent({
     id: randomUUID(), source_id: id, at: new Date().toISOString(), by: by.trim(),
     type: active ? 'geactiveerd' : 'gedeactiveerd', reason: reason.trim(),
   });

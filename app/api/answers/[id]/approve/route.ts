@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   try {
-    const answer = getAnswer(id);
+    const answer = await getAnswer(id);
     if (!answer) return fail('Answer not found', 404);
     const body = await readJson<ApproveRequest>(request);
     const approvedBy = body.approved_by?.trim();
@@ -21,9 +21,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     if (blockers.length) return fail('This answer cannot be approved yet', 409, { blockers });
 
     const now = new Date().toISOString();
-    const approved = approve(answer, buildSnapshot(answer, listSources(), listPassages(), approvedBy, now));
-    saveAnswer(approved);
-    return Response.json(toResponse(approved));
+    const approved = approve(answer, buildSnapshot(answer, await listSources(), await listPassages(), approvedBy, now));
+    await saveAnswer(approved);
+    return Response.json(await toResponse(approved));
   } catch (err) {
     return handleError('POST /api/answers/[id]/approve', err);
   }

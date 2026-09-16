@@ -2,14 +2,16 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import seedSources from '../data/seed/sources.json';
-import { addSourceEvent, insertPassages, resetDb, upsertSource } from '../lib/db';
+import { addSourceEvent, closeDb, insertPassages, resetDb, upsertSource, usingPostgres } from '../lib/db';
+import { saveFile, usingSupabaseStorage } from '../lib/storage';
 import { ingestPdf } from '../lib/ingest';
 import type { Source } from '../lib/types';
 
 type SeedEntry = Omit<Source, 'sha256' | 'added_at' | 'added_by'> & { seed: boolean };
 
 async function main() {
-  resetDb();
+  console.log(`database: ${usingPostgres() ? 'Postgres (Supabase)' : 'local SQLite'} · files: ${usingSupabaseStorage() ? 'Supabase Storage' : 'local disk'}\n`);
+  await resetDb();
   const now = new Date().toISOString();
   let files = 0;
   let metadataOnly = 0;
@@ -29,21 +31,24 @@ async function main() {
         process.exitCode = 1;
         continue;
       }
-      const { sha256, passages } = await ingestPdf(new Uint8Array(fs.readFileSync(abs)), source.id);
+      const bytes = new Uint8Array(fs.readFileSync(abs));
+      const { sha256, passages } = await ingestPdf(bytes, source.id);
+      if (usingSupabaseStorage()) await saveFile(source.file_path, bytes);
       source.sha256 = sha256;
-      upsertSource(source);
-      insertPassages(passages);
+      await upsertSource(source);
+      await insertPassages(passages);
       files++;
       console.log(`ok    ${source.id}: ${passages.length} passages`);
     } else {
-      upsertSource(source);
+      await upsertSource(source);
       metadataOnly++;
       console.log(`ok    ${source.id}: metadata only`);
     }
-    addSourceEvent({ id: randomUUID(), source_id: source.id, at: now, by: 'seed', type: 'toegevoegd', reason: null });
+    await addSourceEvent({ id: randomUUID(), source_id: source.id, at: now, by: 'seed', type: 'toegevoegd', reason: null });
   }
 
   console.log(`\n${files} sources with files, ${metadataOnly} metadata-only`);
+  await closeDb();
 }
 
 main();
