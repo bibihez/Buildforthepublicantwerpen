@@ -210,3 +210,15 @@ export type ApiError = {
    */
   fallback?: { candidate_ids: string[]; sources: Record<string, Source>; passages: Record<string, Passage> };
 };
+
+// POST /api/web-search                     body: WebSearchRequest           → WebSearchResponse | 502 ApiError
+/** Web search FINDS candidate documents. Results are never evidence: the officer uploads a document to use it. */
+export type WebSearchRequest = { question: string; all_domains?: boolean };
+export type WebSearchResult = { title: string; url: string; domain: string; official: boolean };
+export type WebSearchResponse = {
+  summary: string;                   // AI text about what was found; label it "Webresultaat — niet geverifieerd"
+  results: WebSearchResult[];        // pages the summary cites; official = government domain
+  all_domains: boolean;              // false = restricted to government domains
+  searched_at: string;
+  model: string;
+};
