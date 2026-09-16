@@ -2,6 +2,7 @@
 
 import { ArrowRight, Check, ListChecks, Plus, Trash } from "@phosphor-icons/react";
 import type { Casus, Fact } from "@/lib/types";
+import { initialCaseFacts } from "@/lib/case-facts";
 
 type Props = {
   casus: Casus;
@@ -15,6 +16,7 @@ const answerLabel = (answer: Fact["answer"]) => (
 );
 
 export function CaseFramingPanel({ casus, disabled, onChange, onConfirm }: Props) {
+  const visibleFacts = initialCaseFacts(casus.facts);
   const valid = Boolean(
     casus.municipality.trim()
     && casus.date
@@ -36,7 +38,7 @@ export function CaseFramingPanel({ casus, disabled, onChange, onConfirm }: Props
   const setFact = (id: string, answer: Fact["answer"]) => {
     onChange({
       ...casus,
-      facts: casus.facts.map((fact) => fact.id === id ? { ...fact, answer, set_by: "officer" as const } : fact),
+      facts: visibleFacts.map((fact) => fact.id === id ? { ...fact, answer, set_by: "officer" as const } : fact),
     });
   };
 
@@ -79,17 +81,17 @@ export function CaseFramingPanel({ casus, disabled, onChange, onConfirm }: Props
         </label>
       </div>
 
-      {casus.facts.length ? (
+      {visibleFacts.length ? (
         <div className="case-framing-section">
           <div className="case-framing-section-heading">
             <div>
               <h3>Operational details</h3>
-              <p>Preselected values are suggestions. Select an answer to confirm or correct each one.</p>
+              <p>Confirm or correct these three questions. The same set remains editable after research.</p>
             </div>
             <ListChecks aria-hidden="true" weight="duotone" />
           </div>
           <div className="framing-facts">
-            {casus.facts.map((fact) => (
+            {visibleFacts.map((fact) => (
               <fieldset className="fact framing-fact" disabled={disabled} key={fact.id}>
                 <legend>{fact.question}</legend>
                 <span className={`fact-provenance fact-provenance-${fact.set_by}`}>

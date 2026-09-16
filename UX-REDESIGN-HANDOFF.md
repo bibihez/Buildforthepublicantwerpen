@@ -44,6 +44,7 @@ an operational workbench.
 11. Added a responsive tri-state fact checklist with AI suggestions, source-condition provenance and officer confirmation.
 12. Removed the bottom human-approval block. A cited entrepreneur draft is produced immediately from verified local findings and refreshes after confirm, correct, reject, fact and not-found decisions.
 13. Kept the reply traceable with numbered source references and added a copy-draft action. Nothing is sent automatically.
+14. Locked Facts to confirm to the first three questions proposed before research. Source analysis cannot append new fact questions; the original three remain editable and can trigger reanalysis after findings exist.
 
 ## Fact safety rule
 

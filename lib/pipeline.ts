@@ -5,6 +5,7 @@ import { CaseDraftSchema, ground, RawFindingsSchema } from './ground';
 import { callJson, loadPrompt, models } from './llm';
 import { compare, findPrecedent } from './precedent';
 import { buildReply } from './reply';
+import { initialCaseFacts, lockCaseFacts } from './case-facts';
 import { passageIdsOf } from './snapshot';
 import { buildIndex, findCandidates, type SearchIndex } from './search';
 import type { Answer, AnswerResponse, ApiError, Casus, Passage, Source } from './types';
@@ -31,7 +32,7 @@ export async function draftCase(question: string, date?: string): Promise<Casus>
     date: date || draft.date || today(),
     activity: draft.activity,
     subquestions: draft.subquestions,
-    facts: draft.facts.map((f) => ({ ...f, set_by: 'ai' as const, origin: 'question' as const })),
+    facts: initialCaseFacts(draft.facts.map((f) => ({ ...f, set_by: 'ai' as const, origin: 'question' as const }))),
   };
 }
 
@@ -47,21 +48,22 @@ function passageForModel(p: Passage, sources: Map<string, Source>): string {
 
 /** Source checks → search → AI ② → grounding. `casus` is taken as given (no AI ①). */
 export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise<Answer> {
+  const lockedCasus = lockCaseFacts(casus);
   const sources = await listSources();
   const sourceMap = new Map(sources.map((s) => [s.id, s]));
-  const verdicts = verdictsFor(sources, casus, config, await listSourceEvents());
-  const { candidates, notUsed } = findCandidates(casus, verdicts, await getIndex());
+  const verdicts = verdictsFor(sources, lockedCasus, config, await listSourceEvents());
+  const { candidates, notUsed } = findCandidates(lockedCasus, verdicts, await getIndex());
 
   const user = [
     `## Case`,
     JSON.stringify(
       {
-        question: casus.question,
-        municipality: casus.municipality,
-        date: casus.date,
-        activity: casus.activity,
-        subquestions: casus.subquestions,
-        facts: casus.facts.map(({ id, question, answer, set_by }) => ({
+        question: lockedCasus.question,
+        municipality: lockedCasus.municipality,
+        date: lockedCasus.date,
+        activity: lockedCasus.activity,
+        subquestions: lockedCasus.subquestions,
+        facts: lockedCasus.facts.map(({ id, question, answer, set_by }) => ({
           id,
           question,
           answer: set_by === 'officer' ? answer : 'onbekend',
@@ -76,16 +78,16 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
 
   const raw = candidates.length
     ? await callJson(models.strong(), loadPrompt('findings'), user, RawFindingsSchema, { name: 'bevindingen', effort: (process.env.OPENAI_EFFORT_FINDINGS as 'low' | 'medium') || 'low' })
-    : { findings: [], not_found: casus.subquestions };
+    : { findings: [], not_found: lockedCasus.subquestions };
 
-  const grounded = ground(raw, candidates, verdicts, { subquestions: casus.subquestions, facts: casus.facts, sources });
+  const grounded = ground(raw, candidates, verdicts, { subquestions: lockedCasus.subquestions, facts: lockedCasus.facts, sources });
 
   const answer: Answer = {
     id: base.id ?? randomUUID(),
     parent_id: base.parent_id ?? null,
     created_at: base.created_at ?? new Date().toISOString(),
     revision: (base.revision ?? 0) + 1,
-    casus: { ...casus, facts: [...casus.facts, ...grounded.added_facts] },
+    casus: lockedCasus,
     verdicts,
     candidates: candidates.map((p) => p.id),
     findings: grounded.findings,
@@ -101,7 +103,7 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
     snapshot: null,
   };
   // After the findings exist, and never given to the AI.
-  const precedent = findPrecedent(casus.question, await listAnswers(), { excludeId: answer.id });
+  const precedent = findPrecedent(lockedCasus.question, await listAnswers(), { excludeId: answer.id });
   const passageSource = new Map(candidates.map((p) => [p.id, p.source_id]));
   answer.precedent = precedent ? compare(precedent, answer, sources, (id) => passageSource.get(id)) : null;
   answer.reply_text = buildReply({
@@ -140,7 +142,7 @@ export async function fallbackFor(casus: Pick<Casus, 'question'> & Partial<Casus
     date: casus.date || today(),
     activity: casus.activity ?? '',
     subquestions: casus.subquestions ?? [],
-    facts: casus.facts ?? [],
+    facts: initialCaseFacts(casus.facts ?? []),
   };
   const verdicts = verdictsFor(sources, full, config, await listSourceEvents());
   const { candidates } = findCandidates(full, verdicts, await getIndex());

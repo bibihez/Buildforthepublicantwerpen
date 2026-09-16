@@ -1,4 +1,5 @@
 import type { Casus, Fact } from "@/lib/types";
+import { initialCaseFacts } from "@/lib/case-facts";
 import { Check, Sparkle } from "@phosphor-icons/react";
 
 type Props = {
@@ -10,13 +11,14 @@ type Props = {
 };
 
 export function CaseCard({ casus, disabled, onCasusChange, onFactsChange, onRerun }: Props) {
+  const visibleFacts = initialCaseFacts(casus.facts);
   const setFact = (id: string, answer: Fact["answer"]) => {
-    onFactsChange(casus.facts.map((fact) => (
+    onFactsChange(visibleFacts.map((fact) => (
       fact.id === id ? { ...fact, answer, set_by: "officer" as const } : fact
     )));
   };
 
-  const confirmedCount = casus.facts.filter((fact) => fact.set_by === "officer").length;
+  const confirmedCount = visibleFacts.filter((fact) => fact.set_by === "officer").length;
 
   return (
     <section className="panel case-card" aria-labelledby="casus-heading">
@@ -50,18 +52,18 @@ export function CaseCard({ casus, disabled, onCasusChange, onFactsChange, onReru
         <div className="fact-section-heading">
           <div>
             <h3>Facts to confirm</h3>
-            <p>Bronwijzer suggests answers from the request and identifies checks required by source conditions.</p>
+            <p>The three facts from the confirmed brief stay fixed. You can still update them and reanalyse.</p>
           </div>
-          {casus.facts.length ? <span>{confirmedCount}/{casus.facts.length} confirmed</span> : null}
+          {visibleFacts.length ? <span>{confirmedCount}/{visibleFacts.length} confirmed</span> : null}
         </div>
-        {casus.facts.length ? (
+        {visibleFacts.length ? (
           <p className="fact-safety-note">
             <Sparkle aria-hidden="true" weight="fill" />
             AI suggestions are treated as Unknown until an officer confirms them.
           </p>
         ) : null}
-        {casus.facts.length === 0 ? <p className="muted">No additional facts identified.</p> : null}
-        {casus.facts.map((fact) => {
+        {visibleFacts.length === 0 ? <p className="muted">No additional facts identified.</p> : null}
+        {visibleFacts.map((fact) => {
           const aiSuggestion = fact.set_by === "ai" && fact.answer !== "onbekend";
           const provenance = fact.set_by === "officer"
             ? "Confirmed by officer"

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, Files, SealCheck } from "@phosphor-icons/react";
 import { answerClient, ClientError } from "@/lib/client";
 import { buildReply } from "@/lib/reply";
+import { initialCaseFacts, lockCaseFacts } from "@/lib/case-facts";
 import type {
   AnswerResponse,
   ApiError,
@@ -157,6 +158,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
 
   const confirmResearch = async () => {
     if (!draftCasus) return;
+    const confirmedCasus = lockCaseFacts(draftCasus);
+    setDraftCasus(confirmedCasus);
     setLoading(true);
     setAnalysisRunning(true);
     setLoadingStep(0);
@@ -166,10 +169,10 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     try {
       if (fixtureMode) {
         const fixture = cloneFixture();
-        fixture.answer.casus = draftCasus;
+        fixture.answer.casus = confirmedCasus;
         acceptResponse(fixture, true, true);
       } else {
-        acceptResponse(await answerClient.create({ casus: draftCasus }), true, true);
+        acceptResponse(await answerClient.create({ casus: confirmedCasus }), true, true);
       }
     } catch (caught) {
       showError(caught);
@@ -208,6 +211,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
 
   const rerun = async () => {
     if (!data || !draftCasus || data.answer.status === "goedgekeurd") return;
+    const rerunCasus = lockCaseFacts(draftCasus);
+    setDraftCasus(rerunCasus);
     setLoading(true);
     setAnalysisRunning(true);
     setLoadingStep(0);
@@ -217,13 +222,13 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       if (fixtureMode) {
         const response = {
           ...data,
-          answer: { ...data.answer, casus: draftCasus, revision: data.answer.revision + 1, reply_stale: true },
+          answer: { ...data.answer, casus: rerunCasus, revision: data.answer.revision + 1, reply_stale: true },
         };
         acceptResponse(response, true, true);
       } else {
         acceptResponse(await answerClient.rerun(data.answer.id, {
           revision: data.answer.revision,
-          casus: draftCasus,
+          casus: rerunCasus,
         }), true, true);
       }
     } catch (caught) {
@@ -235,8 +240,9 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   };
 
   const setFacts = (facts: Fact[]) => {
-    setDraftCasus((casus) => casus ? { ...casus, facts } : casus);
-    void update({ facts });
+    const lockedFacts = initialCaseFacts(facts);
+    setDraftCasus((casus) => casus ? { ...casus, facts: lockedFacts } : casus);
+    void update({ facts: lockedFacts });
   };
 
   const review = (findingReview: FindingReviewUpdate) => {

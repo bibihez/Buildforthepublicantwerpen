@@ -7,10 +7,11 @@ Return JSON only, matching the schema.
 - subquestions: 3–4 short English questions the officer must answer, no overlap between them.
   For a question about applying for something (a place, a permit, a subsidy), always include these three:
   how to apply, which documents to attach, what it costs. Add one about conditions only if the question hints at it.
-- facts: up to 4 yes/no questions whose answer changes which requirements apply
+- facts: exactly 3 concise yes/no questions whose answer is most likely to change which requirements apply
   (e.g. "Does the applicant sell food?", "Does the applicant use gas or electricity?",
   "Is this a fixed or temporary market pitch?").
   id = one short lowercase English word without spaces (e.g. "food", "gas", "fixed").
+  Prioritise the three highest-impact questions and do not add a fourth.
   answer = "ja" or "nee" ONLY if the question states it explicitly; otherwise "onbekend". Never assume.
 - date: ISO date only if the question states one; otherwise null.
 Do not answer the question.
