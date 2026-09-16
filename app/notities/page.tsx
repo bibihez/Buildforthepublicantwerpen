@@ -5,7 +5,7 @@ export default function NotesPage() {
     <main className="workspace">
       <section className="intro-row">
         <div>
-          <p className="eyebrow">Colleague knowledge</p>
+          <p className="eyebrow">Officer context</p>
           <h1>Notes</h1>
           <p>Practical officer knowledge. Never evidence: an answer relies only on official sources.</p>
         </div>

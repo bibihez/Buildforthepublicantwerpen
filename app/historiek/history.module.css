@@ -482,6 +482,20 @@
   line-height: 1.45;
 }
 
+.citationSourceLink {
+  display: inline-flex;
+  margin-top: 10px;
+  color: #1f6041;
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-underline-offset: 3px;
+}
+
+.citationSourceLink:focus-visible {
+  outline: 3px solid #e8ac45;
+  outline-offset: 3px;
+}
+
 .sourceCard h3 {
   padding-right: 12px;
 }

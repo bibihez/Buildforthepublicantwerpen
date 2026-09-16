@@ -1,26 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle, Files, Sparkle } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { ArrowRight, CheckCircle, Files, SealCheck } from "@phosphor-icons/react";
 import { answerClient, ClientError } from "@/lib/client";
 import { buildReply } from "@/lib/reply";
-import { getApproveBlockers } from "@/lib/review-policy";
 import type {
   AnswerResponse,
   ApiError,
-  ApproveBlocker,
   Casus,
   Fact,
   NotFound,
-  Snapshot,
   UpdateAnswerRequest,
 } from "@/lib/types";
 import {
   FIXTURE_DEVELOPMENT_NOTICE,
   fixtureAnswerResponse,
 } from "@/data/seed/fixture-answer";
-import { ApproveBar } from "./ApproveBar";
 import { AnalysisTrace } from "./AnalysisTrace";
+import { CaseFramingPanel } from "./CaseFramingPanel";
 import { CaseCard } from "./CaseCard";
 import { EvidencePanel } from "./EvidencePanel";
 import { NotesPanel } from "@/components/NotesPanel";
@@ -31,14 +28,7 @@ import type { FindingReviewUpdate } from "./ReviewActions";
 import { NotUsedList } from "./NotUsedList";
 import { ReplyEditor } from "./ReplyEditor";
 
-const DEFAULT_QUESTION = "I want a permanent pitch at the market in Schoten. How do I apply?";
 const loadingMessages = ["Checking sources…", "Searching passages…", "Preparing findings…"];
-const suggestedQuestions = [
-  "How do I apply for a fixed market pitch in Schoten?",
-  "Which permits do I need for a food truck?",
-  "What are the rules for a terrace?",
-  "Which documents are required for a retail activity?",
-];
 
 function cloneFixture(): AnswerResponse {
   return JSON.parse(JSON.stringify(fixtureAnswerResponse)) as AnswerResponse;
@@ -78,17 +68,17 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const initialFixtureMode = process.env.NEXT_PUBLIC_USE_FIXTURES === "true";
   const [fixtureMode, setFixtureMode] = useState(initialFixtureMode);
   const [data, setData] = useState<AnswerResponse | null>(initialFixtureMode ? cloneFixture() : null);
-  const [question, setQuestion] = useState(initialFixtureMode ? fixtureAnswerResponse.answer.casus.question : DEFAULT_QUESTION);
+  const [question, setQuestion] = useState(initialFixtureMode ? fixtureAnswerResponse.answer.casus.question : "");
   const [draftCasus, setDraftCasus] = useState<Casus | null>(initialFixtureMode ? cloneFixture().answer.casus : null);
   const [selectedId, setSelectedId] = useState<string | null>(initialFixtureMode ? fixtureAnswerResponse.answer.findings[0]?.id || null : null);
   const [replyText, setReplyText] = useState(initialFixtureMode ? fixtureAnswerResponse.answer.reply_text : "");
-  const [reviewer, setReviewer] = useState("");
+  const reviewer = "";
   const [loading, setLoading] = useState(Boolean(initialAnswerId && !initialFixtureMode));
+  const [caseBuilding, setCaseBuilding] = useState(false);
   const [analysisRunning, setAnalysisRunning] = useState(false);
   const [webSearchRun, setWebSearchRun] = useState(initialFixtureMode ? 1 : 0);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [serverBlockers, setServerBlockers] = useState<ApproveBlocker[]>([]);
   const [fallback, setFallback] = useState<ApiError["fallback"]>(undefined);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -107,7 +97,6 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       : response.answer.findings[0]?.id || null);
     if (resetReply) setReplyText(response.answer.reply_text || buildReply(response));
     if (refreshWebSearch) setWebSearchRun((current) => current + 1);
-    setServerBlockers([]);
     setFallback(undefined);
     setError(null);
   };
@@ -116,7 +105,6 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     if (caught instanceof ClientError) {
       setError(caught.message);
       setFallback(caught.details?.fallback);
-      if (caught.details?.blockers) setServerBlockers(caught.details.blockers);
       return;
     }
     setError(caught instanceof Error ? caught.message : "An unexpected error occurred.");
@@ -140,8 +128,35 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     return () => { cancelled = true; };
   }, [initialAnswerId, fixtureMode]);
 
-  const analyse = async () => {
+  const buildCase = async () => {
     if (!question.trim()) return;
+    setLoading(true);
+    setCaseBuilding(true);
+    setError(null);
+    setFallback(undefined);
+    setNotice(null);
+    setData(null);
+    setSelectedId(null);
+    setReplyText("");
+    try {
+      if (fixtureMode) {
+        const fixture = cloneFixture();
+        fixture.answer.casus.question = question.trim();
+        setDraftCasus(fixture.answer.casus);
+      } else {
+        const response = await answerClient.draftCase({ question: question.trim() });
+        setDraftCasus(response.casus);
+      }
+    } catch (caught) {
+      showError(caught);
+    } finally {
+      setCaseBuilding(false);
+      setLoading(false);
+    }
+  };
+
+  const confirmResearch = async () => {
+    if (!draftCasus) return;
     setLoading(true);
     setAnalysisRunning(true);
     setLoadingStep(0);
@@ -151,10 +166,10 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     try {
       if (fixtureMode) {
         const fixture = cloneFixture();
-        fixture.answer.casus.question = question.trim();
+        fixture.answer.casus = draftCasus;
         acceptResponse(fixture, true, true);
       } else {
-        acceptResponse(await answerClient.create({ question: question.trim() }), true, true);
+        acceptResponse(await answerClient.create({ casus: draftCasus }), true, true);
       }
     } catch (caught) {
       showError(caught);
@@ -170,9 +185,18 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setError(null);
     setFallback(undefined);
     try {
-      const response = fixtureMode
+      let response = fixtureMode
         ? localUpdate(data, { revision: data.answer.revision, ...patch })
         : await answerClient.update(data.answer.id, { revision: data.answer.revision, ...patch });
+      const findingsChanged = Boolean(patch.facts || patch.finding_reviews || patch.not_found_decisions);
+      if (findingsChanged) {
+        const refreshedReply = buildReply(response);
+        response = fixtureMode
+          ? localUpdate(response, { revision: response.answer.revision, reply_text: refreshedReply })
+          : await answerClient.update(response.answer.id, { revision: response.answer.revision, reply_text: refreshedReply });
+        setReplyText(refreshedReply);
+        setNotice("The sourced draft was updated to reflect your review decisions.");
+      }
       acceptResponse(response);
       if (patch.reply_text !== undefined) setReplyText(response.answer.reply_text);
     } catch (caught) {
@@ -195,12 +219,12 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           ...data,
           answer: { ...data.answer, casus: draftCasus, revision: data.answer.revision + 1, reply_stale: true },
         };
-        acceptResponse(response, false, true);
+        acceptResponse(response, true, true);
       } else {
         acceptResponse(await answerClient.rerun(data.answer.id, {
           revision: data.answer.revision,
           casus: draftCasus,
-        }), false, true);
+        }), true, true);
       }
     } catch (caught) {
       showError(caught);
@@ -237,77 +261,35 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     void update({ not_found_decisions: [{ subquestion, decision }] });
   };
 
+  const selectEvidence = (findingId: string) => {
+    setSelectedId(findingId);
+    window.requestAnimationFrame(() => document.getElementById("evidence-heading")?.focus({ preventScroll: window.innerWidth >= 1200 }));
+  };
+
   const regenerateReply = () => {
     if (!data) return;
     const regenerated = buildReply(data);
     if (replyText.trim() && replyText !== data.answer.reply_text && !window.confirm("This will overwrite your unsaved manual changes. Continue?")) return;
     setReplyText(regenerated);
-    setNotice("Reply rebuilt. Save this version to make it ready for approval.");
+    setNotice("Reply rebuilt from the reviewed findings and exact source citations.");
   };
-
-  const approve = async () => {
-    if (!data || !reviewer.trim()) return;
-    setLoading(true);
-    setError(null);
-    setFallback(undefined);
-    try {
-      if (fixtureMode) {
-        const at = new Date().toISOString();
-        const snapshot: Snapshot = {
-          taken_at: at,
-          revision: data.answer.revision,
-          casus: data.answer.casus,
-          sources: Object.values(data.sources),
-          passages: Object.values(data.passages),
-          verdicts: data.answer.verdicts,
-          findings: data.answer.findings,
-          not_found: data.answer.not_found,
-          not_used: data.answer.not_used,
-          notes_used: [],
-          precedent: data.answer.precedent || null,
-          reply_text: replyText,
-          approved_by: reviewer.trim(),
-          approved_at: at,
-          models: data.answer.models,
-        };
-        acceptResponse({
-          ...data,
-          answer: { ...data.answer, status: "goedgekeurd", approved_by: reviewer.trim(), approved_at: at, snapshot },
-        });
-      } else {
-        acceptResponse(await answerClient.approve(data.answer.id, {
-          revision: data.answer.revision,
-          approved_by: reviewer.trim(),
-        }));
-      }
-      setNotice("This answer version was approved and saved as an immutable snapshot.");
-    } catch (caught) {
-      showError(caught);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const blockers = useMemo(() => {
-    if (!data) return [];
-    const local = getApproveBlockers(data.answer);
-    const merged = [...local];
-    for (const blocker of serverBlockers) {
-      if (!merged.some((item) => item.code === blocker.code && item.ref === blocker.ref)) merged.push(blocker);
-    }
-    return merged;
-  }, [data, serverBlockers]);
 
   const openFixture = () => {
     const fixture = cloneFixture();
     setFixtureMode(true);
     setQuestion(fixture.answer.casus.question);
+    setData(null);
+    setDraftCasus(fixture.answer.casus);
+    setSelectedId(null);
+    setReplyText("");
     setNotice(null);
-    acceptResponse(fixture, true, true);
+    setError(null);
+    setFallback(undefined);
   };
 
   const leaveFixture = () => {
     setFixtureMode(false);
+    setQuestion("");
     setData(null);
     setDraftCasus(null);
     setSelectedId(null);
@@ -318,26 +300,30 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   };
 
   return (
-    <main className="workspace workbench">
-      <aside className="workbench-rail" aria-label="Question context">
-        <NotesPanel
-          question={question.trim() || undefined}
-          defaultTopic={draftCasus?.activity ?? data?.answer.casus.activity ?? ""}
-          author={reviewer}
-        />
+    <main className={`workspace workbench ${data ? "workbench-results" : ""}`}>
+      <aside className="workbench-rail" aria-label={data ? "Selected finding evidence" : "Question context"}>
+        {data ? (
+          <EvidencePanel data={data} selectedId={selectedId} />
+        ) : (
+          <NotesPanel
+            question={question.trim() || undefined}
+            defaultTopic={draftCasus?.activity ?? ""}
+            author={reviewer}
+          />
+        )}
 
         <section className="panel source-ready-card">
           <span className="context-icon" aria-hidden="true"><Files weight="duotone" /></span>
           <div>
             <strong>{data ? `${Object.keys(data.sources).length} source documents checked` : "Official source library ready"}</strong>
-            <p>Bronwijzer searches uploaded regulations and guidance after you analyse the question.</p>
+            <p>Bronwijzer searches uploaded regulations and guidance after you confirm the research brief.</p>
           </div>
         </section>
 
         <section className="trust-card">
           <CheckCircle aria-hidden="true" weight="fill" />
           <div>
-            <strong>Trusted information, in your hands</strong>
+            <strong>Approved sources, in your hands</strong>
             <p>Every finding links to an exact source quote. You remain responsible for the final answer.</p>
           </div>
         </section>
@@ -345,17 +331,10 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
 
       <div className="workbench-main">
         <section className="assistant-intro">
-          <span className="assistant-mark" aria-hidden="true"><Sparkle weight="fill" /></span>
+          <span className="assistant-mark" aria-hidden="true"><SealCheck weight="duotone" /></span>
           <p className="assistant-kicker">Evidence assistant for local economy</p>
-          <h1>What can I help you verify today?</h1>
-          <p>Ask about permits, regulations or procedures. Bronwijzer will trace the answer back to official sources.</p>
-          <div className="suggested-questions" aria-label="Suggested questions">
-            {suggestedQuestions.map((suggestion) => (
-              <button type="button" onClick={() => setQuestion(suggestion)} disabled={loading} key={suggestion}>
-                {suggestion}
-              </button>
-            ))}
-          </div>
+          <h1>What does the entrepreneur need help with?</h1>
+          <p>Paste the question as received. You can correct the framing before source research starts.</p>
           {process.env.NODE_ENV !== "production" ? (
             <button type="button" className="button button-quiet fixture-trigger" onClick={fixtureMode ? leaveFixture : openFixture}>
               {fixtureMode ? "Use live API" : "Open development fixture"}
@@ -386,23 +365,25 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             disabled={loading}
-            placeholder="Ask a question about a permit, regulation or procedure"
+            placeholder="Paste the entrepreneur's question…"
           />
-          <button type="button" className="button button-primary analyse-button" onClick={analyse} disabled={loading || !question.trim()}>
-            <span>{analysisRunning ? loadingMessages[loadingStep] : loading ? "Working…" : "Analyse"}</span>
+          <button type="button" className="button button-primary analyse-button" onClick={buildCase} disabled={loading || !question.trim()}>
+            <span>{caseBuilding ? "Building case…" : loading ? "Working…" : "Build case"}</span>
             {!loading ? <ArrowRight aria-hidden="true" weight="bold" /> : null}
           </button>
         </div>
       </section>
 
-      <AnalysisTrace question={question} running={analysisRunning} activeStep={loadingStep} data={data} />
-
-      {data ? (
-        <WebSearchPanel
-          question={data.answer.casus.question}
-          runKey={`${data.answer.id}:${webSearchRun}`}
+      {draftCasus && !data ? (
+        <CaseFramingPanel
+          casus={draftCasus}
+          disabled={loading}
+          onChange={setDraftCasus}
+          onConfirm={confirmResearch}
         />
       ) : null}
+
+      <AnalysisTrace question={question} running={analysisRunning} activeStep={loadingStep} data={data} />
 
       {data && draftCasus ? (
         <>
@@ -414,26 +395,35 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
             </section>
           ) : null}
 
-          <div className="analysis-grid">
-            <CaseCard
-              casus={draftCasus}
-              disabled={loading || data.answer.status === "goedgekeurd"}
-              onCasusChange={setDraftCasus}
-              onFactsChange={setFacts}
-              onRerun={rerun}
-            />
-            <FindingList
-              answer={data.answer}
-              selectedId={selectedId}
-              reviewer={reviewer}
-              disabled={loading || data.answer.status === "goedgekeurd"}
-              onSelect={setSelectedId}
-              onReview={review}
-              onBulkConfirm={bulkConfirm}
-              onNotFoundDecision={decideMissing}
-            />
-            <EvidencePanel data={data} selectedId={selectedId} />
-          </div>
+          <CaseCard
+            casus={draftCasus}
+            disabled={loading || data.answer.status === "goedgekeurd"}
+            onCasusChange={setDraftCasus}
+            onFactsChange={setFacts}
+            onRerun={rerun}
+          />
+        </>
+      ) : null}
+
+      {data ? (
+        <WebSearchPanel
+          question={data.answer.casus.question}
+          runKey={`${data.answer.id}:${webSearchRun}`}
+        />
+      ) : null}
+
+      {data && draftCasus ? (
+        <>
+          <FindingList
+            answer={data.answer}
+            selectedId={selectedId}
+            reviewer={reviewer}
+            disabled={loading || data.answer.status === "goedgekeurd"}
+            onSelect={selectEvidence}
+            onReview={review}
+            onBulkConfirm={bulkConfirm}
+            onNotFoundDecision={decideMissing}
+          />
 
           <NotUsedList data={data} />
           <ReplyEditor
@@ -443,15 +433,6 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
             onChange={setReplyText}
             onRegenerate={regenerateReply}
             onSave={() => void update({ reply_text: replyText })}
-          />
-          <ApproveBar
-            approved={data.answer.status === "goedgekeurd"}
-            reviewer={reviewer}
-            replyText={replyText}
-            blockers={blockers}
-            disabled={loading}
-            onReviewerChange={setReviewer}
-            onApprove={approve}
           />
         </>
       ) : null}

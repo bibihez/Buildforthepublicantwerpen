@@ -1,4 +1,5 @@
 import type { AnswerResponse, Citation, Level, Nature, Passage } from "@/lib/types";
+import { sourceDocumentHref } from "@/lib/source-link";
 import { ArrowSquareOut } from "@phosphor-icons/react";
 
 const levelLabels: Record<Level, string> = {
@@ -30,7 +31,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
     return (
       <aside className="panel evidence-panel">
         <p className="eyebrow">Evidence</p>
-        <h2>Official evidence</h2>
+        <h2 tabIndex={-1}>Official evidence</h2>
         <div className="empty-state">
           <p>Select a finding to review its evidence.</p>
         </div>
@@ -43,7 +44,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
       <div className="panel-heading">
         <div>
           <p className="eyebrow">Evidence</p>
-          <h2 id="evidence-heading">Official evidence</h2>
+          <h2 id="evidence-heading" tabIndex={-1}>Official evidence</h2>
         </div>
         <span className="count">{finding.citations.length}</span>
       </div>
@@ -67,8 +68,8 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
                 <strong>{source.short_title}</strong>
                 <p>{passage.article || "Passage"}, p. {passage.page_from}{passage.page_to !== passage.page_from ? `-${passage.page_to}` : ""}</p>
               </div>
-              <a className="button button-small button-secondary" href={`/files/${source.id}#page=${passage.page_from}`} target="_blank" rel="noreferrer">
-                Open source <ArrowSquareOut aria-label="opens in a new tab" />
+              <a className="button button-small button-secondary" href={sourceDocumentHref(source.id, passage.page_from, citation.quote, passage.page_to)} target="_blank" rel="noreferrer">
+                Open original <ArrowSquareOut aria-label="opens in a new tab with the quote highlighted" />
               </a>
             </div>
             <div className="chip-row">
@@ -79,6 +80,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
             <div className="quote-block">
               <p className="quote-label">Exact quote from the Dutch source</p>
               <blockquote><mark>{citation.quote}</mark></blockquote>
+              <p className="quote-open-hint">The original page opens with this exact quote highlighted in the document.</p>
             </div>
             <details>
               <summary>Show surrounding passage</summary>

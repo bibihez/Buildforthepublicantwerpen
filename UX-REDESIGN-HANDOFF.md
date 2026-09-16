@@ -6,7 +6,8 @@ Date: 16 September 2026, Europe/Brussels
 
 - Existing production design: `main` at `4e5d0f1`; its last design change is `a64dcf7`.
 - Reference-inspired redesign: `ui/reference-redesign`.
-- The redesign must be tested and reviewed on its branch. Do not merge it into `main` until Matisse approves it.
+- The redesign was developed and tested in isolation on `ui/reference-redesign`.
+- Matisse explicitly approved merging the completed edits into `main` on 16 September 2026.
 
 ## Design configuration
 
@@ -31,15 +32,18 @@ an operational workbench.
 ## Implemented UX changes
 
 1. Replaced the horizontal navigation with a responsive navy workbench shell and clear active navigation.
-2. Added a focused conversational question area with useful example questions and a compact composer.
-3. Kept colleague notes as the first context surface and collapsed note creation until requested.
-4. Preserved the staged loading trace and made its search scope explicit.
-5. Promoted web search into a prominent parallel-discovery section directly after the analysis trace.
-6. Kept web results visually and semantically separate from verified evidence, with a persistent `Not evidence` label.
-7. Added a direct link from a web lead to the verified source-upload workflow.
-8. Preserved findings, exact Dutch quotes, surrounding passages, source consultation and human review controls.
-9. Improved official evidence presentation and highlights the cited quotation inside the surrounding passage.
-10. Added a responsive tri-state fact checklist with AI suggestions, source-condition provenance and officer confirmation.
+2. Added a confirmation-first case builder: the AI proposes territory, date, activity, operational facts and research questions, but official-source research begins only after the officer confirms the brief.
+3. Removed generic question suggestions. Suggestions now frame the submitted case instead of prompting users with sample questions.
+4. Renamed colleague notes to officer notes and kept them as the first context surface. Dictation is visibly labelled as a future feature.
+5. Preserved the staged loading trace and made its search scope explicit without exposing private chain-of-thought.
+6. Kept Question details in the narrative immediately before the web-source section after research completes.
+7. Promoted web search into a prominent parallel-discovery section, while keeping web leads outside the evidence set until a document is uploaded and verified.
+8. Made Findings the full-width primary review surface and moved selected official evidence into the right rail.
+9. Made the full finding content area open its associated evidence, with keyboard support and visible selected state.
+10. Added a dedicated source-document viewer that opens the cited PDF page and highlights the exact Dutch quote inside the original document.
+11. Added a responsive tri-state fact checklist with AI suggestions, source-condition provenance and officer confirmation.
+12. Removed the bottom human-approval block. A cited entrepreneur draft is produced immediately from verified local findings and refreshes after confirm, correct, reject, fact and not-found decisions.
+13. Kept the reply traceable with numbered source references and added a copy-draft action. Nothing is sent automatically.
 
 ## Fact safety rule
 
@@ -78,23 +82,38 @@ All delegated reviews were read-only. Subagents created no commits and edited no
 - Recommended stronger prominence, dedicated non-evidence styling and a verified upload path.
 - Flagged and corrected the search rerun key so explicit reanalysis triggers a fresh web search.
 
+### CivicFlow specification gap audit — `/root/civicflow_gap_audit`
+
+- 15:32 CEST: compared `civicflow-ui-ux-spec.md` with the redesign branch.
+- 15:34 CEST: reported priority gaps in case confirmation, persistent evidence, citation controls, source-verdict clarity and immutable approved history.
+- Action taken in this iteration: implemented the case confirmation gate, persistent selected-evidence rail, finding-to-evidence interaction and source-document highlighting. The old approval UI was intentionally removed by the latest product instruction.
+- Read-only audit: no files edited and no commits created by the subagent.
+
+### PDF highlighting audit — `/root/pdf_highlight_audit`
+
+- 15:35 CEST: confirmed Chromium's built-in PDF viewer does not reliably honour URL text-search fragments for this workflow.
+- Recommended a first-party PDF.js viewer using the repository's existing `unpdf` dependency and a text-layer overlay.
+- Action taken: added `/source/[id]`, quote-to-text-layer mapping, visual highlight overlays, page navigation and a fallback link to the full PDF.
+- Read-only audit: no files edited and no commits created by the subagent.
+
 ## Verification
 
-- `npm test`: 58/58 passed across 9 test files.
+- `npm test`: 65/65 passed across 11 test files.
 - `npm run typecheck`: passed.
 - `npm run lint`: 0 errors; four pre-existing unused-variable warnings.
 - `npx next build --webpack`: passed.
-- Live browser checks passed for responsive navigation, top-priority notes, loading trace, completed web leads, fact
-  suggestion, officer confirmation, findings and exact evidence.
+- Live browser checks passed for the confirmation-first case flow, officer-note terminology, trace, Question details order,
+  prominent web leads, full-width findings, finding-to-evidence selection, cited draft generation and automatic draft refresh.
+- The custom source viewer was verified against fixture page 5: the exact Dutch quotation was visibly highlighted in the PDF.
 
 ## Test both versions
 
 ```bash
-# Existing design
-git switch main
-
-# New design
+# Redesign branch before merge
 git switch ui/reference-redesign
+
+# Production after the approved merge
+git switch main
 ```
 
 After switching, restart the local development server and open `http://localhost:3000/`.

@@ -3,7 +3,9 @@ import type {
   AnswerResponse,
   ApiError,
   ApproveRequest,
+  Casus,
   CreateAnswerRequest,
+  DraftCaseRequest,
   RerunRequest,
   SourceListItem,
   UpdateAnswerRequest,
@@ -43,6 +45,12 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const answerClient = {
+  draftCase(body: DraftCaseRequest) {
+    return request<{ casus: Casus }>("/api/cases/draft", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
   create(body: CreateAnswerRequest) {
     return request<AnswerResponse>("/api/answers", {
       method: "POST",

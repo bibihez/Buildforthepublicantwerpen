@@ -20,7 +20,7 @@ function reviewedResponse(): AnswerResponse {
 }
 
 describe('buildReply', () => {
-  it('uses only reviewed findings and renders source footnotes', () => {
+  it('uses eligible findings and renders source footnotes', () => {
     const result = buildReply(response());
 
     expect(result).toContain(
@@ -29,6 +29,16 @@ describe('buildReply', () => {
     expect(result).toContain('[1] Marktreglement Schoten 2024, Artikel 13 §3, p. 5');
     expect(result).not.toContain('heating appliance');
     expect(result).not.toContain('fourteen days');
+  });
+
+  it('seeds the first draft from open findings backed by verified local quotes', () => {
+    const result = response();
+    result.answer.findings[0].review = 'open';
+
+    const reply = buildReply(result);
+
+    expect(reply).toContain('Complete the application form on the Municipality of Schoten website. [1]');
+    expect(reply).toContain('[1] Marktreglement Schoten 2024, Artikel 13 §3, p. 5');
   });
 
   it('keeps an unknown condition explicit and omits it when the fact is no', () => {

@@ -104,7 +104,11 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
   const precedent = findPrecedent(casus.question, await listAnswers(), { excludeId: answer.id });
   const passageSource = new Map(candidates.map((p) => [p.id, p.source_id]));
   answer.precedent = precedent ? compare(precedent, answer, sources, (id) => passageSource.get(id)) : null;
-  answer.reply_text = buildReply(answer);
+  answer.reply_text = buildReply({
+    answer,
+    sources: Object.fromEntries(sources.map((source) => [source.id, source])),
+    passages: Object.fromEntries(candidates.map((passage) => [passage.id, passage])),
+  });
   await saveAnswer(answer);
   return answer;
 }

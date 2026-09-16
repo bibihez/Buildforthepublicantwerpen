@@ -65,28 +65,38 @@ export function FindingList({
               key={finding.id}
               className={`finding-card ${selectedId === finding.id ? "selected" : ""} ${notApplicable ? "not-applicable" : ""}`}
             >
-              <div className="finding-topline">
-                <p className="subquestion">{finding.subquestion}</p>
-                <StatusBadge finding={finding} />
-              </div>
-              <p className="finding-statement">{finding.corrected_statement || finding.statement}</p>
-              {finding.condition ? (
-                <div className="condition-box">
-                  <strong>Condition (exact Dutch source wording):</strong> {finding.condition.quote}
-                  <span className="condition-state">
-                    {factState === "nee" ? "Not applicable to this case" : factState === "ja" ? "Applicable to this case" : "Conditional"}
-                  </span>
-                </div>
-              ) : null}
-              {finding.status_reasons.map((reason) => <p className="status-reason" key={reason}>{reason}</p>)}
-              <button
-                type="button"
-                className="finding-evidence-button"
+              <div
+                className="finding-select-surface"
+                role="button"
+                tabIndex={0}
                 aria-pressed={selectedId === finding.id}
+                aria-label={`Open official evidence for ${finding.subquestion}`}
                 onClick={() => onSelect(finding.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelect(finding.id);
+                  }
+                }}
               >
-                {selectedId === finding.id ? "Evidence shown below" : "Review exact evidence"}
-              </button>
+                <div className="finding-topline">
+                  <p className="subquestion">{finding.subquestion}</p>
+                  <StatusBadge finding={finding} />
+                </div>
+                <p className="finding-statement">{finding.corrected_statement || finding.statement}</p>
+                {finding.condition ? (
+                  <div className="condition-box">
+                    <strong>Condition (exact Dutch source wording):</strong> {finding.condition.quote}
+                    <span className="condition-state">
+                      {factState === "nee" ? "Not applicable to this case" : factState === "ja" ? "Applicable to this case" : "Conditional"}
+                    </span>
+                  </div>
+                ) : null}
+                {finding.status_reasons.map((reason) => <p className="status-reason" key={reason}>{reason}</p>)}
+                <span className="finding-evidence-cue">
+                  {selectedId === finding.id ? "Official evidence open" : "Open official evidence"}
+                </span>
+              </div>
               <ReviewActions finding={finding} reviewer={reviewer} disabled={disabled} onReview={onReview} />
             </article>
           );

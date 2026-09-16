@@ -1,5 +1,5 @@
 import { listAnswers } from '@/lib/db';
-import { createAnswer, fallbackFor, toResponse } from '@/lib/pipeline';
+import { analyse, createAnswer, fallbackFor, toResponse } from '@/lib/pipeline';
 import type { ApiError, CreateAnswerRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -16,18 +16,23 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ error: 'Invalid request' } satisfies ApiError, { status: 400 });
   }
-  const question = body?.question?.trim();
+  const question = body?.casus?.question?.trim() || body?.question?.trim();
   if (!question) return Response.json({ error: 'No question provided' } satisfies ApiError, { status: 400 });
+  if (body.casus && (!body.casus.municipality?.trim() || !body.casus.activity?.trim() || !body.casus.date || !body.casus.subquestions?.length)) {
+    return Response.json({ error: 'Confirm the territory, date, activity and at least one research question.' } satisfies ApiError, { status: 400 });
+  }
   if (body.date && !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
     return Response.json({ error: 'Date must use the YYYY-MM-DD format' } satisfies ApiError, { status: 400 });
   }
   try {
-    const answer = await createAnswer(question, body.date);
+    const answer = body.casus
+      ? await analyse({ ...body.casus, question })
+      : await createAnswer(question, body.date);
     return Response.json(await toResponse(answer));
   } catch (err) {
     console.error('POST /api/answers failed', err);
     return Response.json(
-      { error: 'No findings were produced. The retrieved passages are shown below.', fallback: await safeFallback({ question, date: body.date }) } satisfies ApiError,
+      { error: 'No findings were produced. The retrieved passages are shown below.', fallback: await safeFallback(body.casus || { question, date: body.date }) } satisfies ApiError,
       { status: 502 },
     );
   }

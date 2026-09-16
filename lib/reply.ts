@@ -110,7 +110,11 @@ function conditionState(answer: Answer, finding: Finding): 'ja' | 'nee' | 'onbek
 }
 
 function chosenFindingText(finding: Finding): ReplyParagraph | null {
-  if (finding.review === 'open' || finding.review === 'verworpen') return null;
+  if (finding.review === 'verworpen') return null;
+
+  // A verified local quote can safely seed the first draft before the officer reviews it.
+  // Uncertain and conflicting findings remain out until the officer makes a decision.
+  if (finding.review === 'open' && finding.status !== 'citaat_gecontroleerd') return null;
 
   if (finding.status === 'tegenstrijdig' || finding.conflict_with) {
     if (!finding.conflict_decision || finding.conflict_decision === 'weglaten') return null;
@@ -181,7 +185,7 @@ function pageLabel(passage: Passage): string {
 }
 
 /**
- * Builds a deterministic reply from reviewed findings only.
+ * Builds a deterministic, sourced reply from verified findings and officer decisions.
  *
  * Pass an `AnswerResponse` for complete source footnotes. An approved `Answer`
  * can be passed directly because its frozen snapshot contains the same source

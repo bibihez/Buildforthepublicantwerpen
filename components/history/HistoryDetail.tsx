@@ -9,6 +9,7 @@ import type {
   Finding,
   Snapshot,
 } from "@/lib/types";
+import { sourceDocumentHref } from "@/lib/source-link";
 import styles from "@/app/historiek/history.module.css";
 
 type DetailState =
@@ -478,6 +479,16 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                           <blockquote className={styles.quote}>
                             “{citation.quote}”
                           </blockquote>
+                          {source && passage && source.file_path ? (
+                            <a
+                              className={styles.citationSourceLink}
+                              href={sourceDocumentHref(source.id, passage.page_from, citation.quote, passage.page_to)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Open original at the highlighted quote
+                            </a>
+                          ) : null}
                         </li>
                       );
                     })}

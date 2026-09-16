@@ -156,8 +156,12 @@ export type AnswerResponse = {
   passages: Record<string, Passage>;   // every passage cited or listed as not used
 };
 
+// POST /api/cases/draft                   body: DraftCaseRequest           → { casus: Casus }
+export type DraftCaseRequest = { question: string; date?: string };
+
 // POST /api/answers                       body: CreateAnswerRequest        → AnswerResponse
-export type CreateAnswerRequest = { question: string; date?: string };
+// `casus` is the officer-confirmed brief. `question` remains supported for older clients.
+export type CreateAnswerRequest = { question?: string; date?: string; casus?: Casus };
 
 // POST /api/answers/[id]/rerun            body: RerunRequest               → AnswerResponse
 export type RerunRequest = { revision: number; casus: Casus };
@@ -189,7 +193,7 @@ export type ApproveRequest = { revision: number; approved_by: string };
 // GET  /api/sources                                                        → { sources: SourceListItem[] }
 // POST /api/sources  multipart: file + SourceUploadFields                  → { source: Source; passages: number } | 400/409 ApiError
 // PATCH /api/sources/[id]  body: { active: boolean; reason: string; by: string } → { source: Source }
-// GET  /files/[sourceId]  → the PDF (A owns this route; B links to `/files/${id}#page=${page_from}`)
+// GET  /files/[sourceId]  → the PDF (`#page=N&search=quote` opens and highlights the cited passage)
 
 export type SourceListItem = Source & { passage_count: number; events: SourceEvent[] };
 

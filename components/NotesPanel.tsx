@@ -11,7 +11,7 @@ type Props = {
   author?: string;
 };
 
-/** Officer knowledge, typed or dictated. Never evidence and never given to the AI. */
+/** Officer knowledge used to frame the case. It remains distinct from official evidence. */
 export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [topic, setTopic] = useState<string | null>(null);
@@ -113,12 +113,12 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
     <section className="panel notes-panel" aria-labelledby="notes-heading">
       <div className="panel-heading compact">
         <div>
-          <p className="eyebrow">Colleague knowledge</p>
-          <h2 id="notes-heading">{question ? "Notes for this question" : "Notes"}</h2>
+          <p className="eyebrow">Officer context</p>
+          <h2 id="notes-heading">{question ? "Officer notes for this question" : "Officer notes"}</h2>
         </div>
         <span className="count">{notes.length}</span>
       </div>
-      <p className="hint">Officer knowledge. Not verified, not evidence and never sent to the AI.</p>
+      <p className="hint">Supporting context for the officer’s answer. It is not verified and never counts as official evidence.</p>
 
       {notes.length ? (
         <ul className="notes-list">
@@ -138,7 +138,7 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
       )}
 
       <details className="notes-composer" open={!question}>
-        <summary><NotePencil aria-hidden="true" /> Add colleague note</summary>
+        <summary><NotePencil aria-hidden="true" /> Add officer note</summary>
       <div className="inline-form notes-form">
         <label>
           Topic
@@ -156,11 +156,12 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
         <div className="button-row">
           <button
             type="button"
-            className={`button button-small ${recording ? "button-danger" : "button-secondary"}`}
+            className={`button button-small dictate-future ${recording ? "button-danger" : "button-secondary"}`}
             onClick={recording ? stopRecording : startRecording}
-            disabled={!!busy}
+            disabled
+            title="Future feature to develop"
           >
-            {recording ? <><Stop aria-hidden="true" weight="fill" /> Stop recording</> : <><Microphone aria-hidden="true" /> Dictate</>}
+            {recording ? <><Stop aria-hidden="true" weight="fill" /> Stop recording</> : <><Microphone aria-hidden="true" /> Dictate <span>Future feature</span></>}
           </button>
           <button type="button" className="button button-small button-primary" onClick={save} disabled={!!busy || recording || !topicValue.trim() || !text.trim() || !nameValue.trim()}>
             {busy ?? "Save as note"}

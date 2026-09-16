@@ -48,7 +48,7 @@ describe('English-to-Dutch search aliases', () => {
     expect(search(index, query).map((hit) => hit.passage.id)).toContain(expectedId);
   });
 
-  it('lets an English question match Dutch colleague-note wording', () => {
+  it('lets an English question match Dutch officer-note wording', () => {
     expect(
       similarity(
         expandSearchQuery('How do I apply for a fixed market pitch?'),

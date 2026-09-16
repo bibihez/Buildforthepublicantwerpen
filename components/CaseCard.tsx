@@ -47,13 +47,6 @@ export function CaseCard({ casus, disabled, onCasusChange, onFactsChange, onReru
       </label>
 
       <div className="case-section">
-        <h3>Subquestions</h3>
-        <ul className="compact-list">
-          {casus.subquestions.map((question) => <li key={question}>{question}</li>)}
-        </ul>
-      </div>
-
-      <div className="case-section">
         <div className="fact-section-heading">
           <div>
             <h3>Facts to confirm</h3>
