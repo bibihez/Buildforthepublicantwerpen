@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyUpdate, approvalBlockers, approve, buildSnapshot, newVersion, RequestError } from '../lib/snapshot';
+import { getApproveBlockers as approvalBlockers } from '../lib/review-policy';
+import { applyUpdate, approve, buildSnapshot, newVersion, RequestError } from '../lib/snapshot';
 import type { Answer, Finding, Passage, Source } from '../lib/types';
 
 const finding = (id: string, over: Partial<Finding> = {}): Finding => ({

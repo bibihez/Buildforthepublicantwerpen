@@ -3,6 +3,7 @@ import config from '../config/schoten.json';
 import { getPassage, listPassages, listSourceEvents, listSources, saveAnswer } from './db';
 import { CaseDraftSchema, ground, RawFindingsSchema } from './ground';
 import { callJson, loadPrompt, models } from './llm';
+import { buildReply } from './reply';
 import { passageIdsOf } from './snapshot';
 import { buildIndex, findCandidates, type SearchIndex } from './search';
 import type { Answer, AnswerResponse, Casus, Passage, Source } from './types';
@@ -87,6 +88,7 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
     models: { case: base.models?.case ?? models.fast(), findings: models.strong() },
     snapshot: null,
   };
+  answer.reply_text = buildReply(answer);
   saveAnswer(answer);
   return answer;
 }

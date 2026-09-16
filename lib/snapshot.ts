@@ -1,4 +1,4 @@
-import type { Answer, ApproveBlocker, Passage, Snapshot, Source, UpdateAnswerRequest } from './types';
+import type { Answer, Passage, Snapshot, Source, UpdateAnswerRequest } from './types';
 
 export class RequestError extends Error {
   constructor(
@@ -61,33 +61,6 @@ export function applyUpdate(answer: Answer, req: UpdateAnswerRequest, now: strin
 
   next.revision = answer.revision + 1;
   return next;
-}
-
-/** Everything that blocks approval, in Dutch, so the officer sees the whole list at once. */
-export function approvalBlockers(answer: Answer, revision: number): ApproveBlocker[] {
-  const blockers: ApproveBlocker[] = [];
-  if (answer.status === 'goedgekeurd') {
-    blockers.push({ code: 'already_approved', message: 'Dit antwoord is al goedgekeurd. Maak een nieuwe versie.' });
-    return blockers;
-  }
-  if (revision !== answer.revision) {
-    blockers.push({ code: 'revision_mismatch', message: 'Dit antwoord werd intussen gewijzigd. Herlaad de pagina en kijk opnieuw na.' });
-  }
-  for (const f of answer.findings) {
-    if (f.review === 'open') blockers.push({ code: 'finding_open', message: `Nog niet nagekeken: "${f.statement}"`, ref: f.id });
-    if (f.status === 'tegenstrijdig' && f.review !== 'verworpen' && !f.conflict_decision) {
-      blockers.push({ code: 'conflict_undecided', message: `Kies hoe de tegenstrijdige passages behandeld worden: "${f.statement}"`, ref: f.id });
-    }
-  }
-  for (const n of answer.not_found) {
-    if (!n.decision) {
-      blockers.push({ code: 'not_found_undecided', message: `Kies of "${n.subquestion}" als niet gevonden vermeld wordt`, ref: n.subquestion });
-    }
-  }
-  if (answer.reply_stale) {
-    blockers.push({ code: 'reply_stale', message: 'Het antwoord werd gewijzigd na het opstellen van de tekst. Bouw de tekst opnieuw op of sla hem op.' });
-  }
-  return blockers;
 }
 
 export function passageIdsOf(answer: Answer): string[] {

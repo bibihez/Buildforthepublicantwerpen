@@ -1,7 +1,8 @@
 import { getAnswer, listPassages, listSources, saveAnswer } from '@/lib/db';
 import { fail, handleError, readJson } from '@/lib/http';
 import { toResponse } from '@/lib/pipeline';
-import { approvalBlockers, approve, buildSnapshot } from '@/lib/snapshot';
+import { getApproveBlockers } from '@/lib/review-policy';
+import { approve, buildSnapshot } from '@/lib/snapshot';
 import type { ApproveRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -16,7 +17,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     const approvedBy = body.approved_by?.trim();
     if (!approvedBy) return fail('Naam van de medewerker ontbreekt', 400);
 
-    const blockers = approvalBlockers(answer, body.revision);
+    const blockers = getApproveBlockers(answer, body.revision);
     if (blockers.length) return fail('Goedkeuren kan nog niet', 409, { blockers });
 
     const now = new Date().toISOString();
