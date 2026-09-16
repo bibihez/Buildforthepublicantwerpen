@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { listNotes, saveNote } from './db';
 import { similarity } from './precedent';
+import { expandSearchQuery } from './search';
 import { RequestError } from './snapshot';
 import type { CreateNoteRequest, Note } from './types';
 
@@ -20,8 +21,9 @@ export async function createNote(req: CreateNoteRequest): Promise<Note> {
 export async function findNotes(question?: string | null): Promise<Note[]> {
   const notes = await listNotes();
   if (!question?.trim()) return notes;
+  const matchingQuestion = expandSearchQuery(question);
   return notes
-    .map((n) => ({ n, score: similarity(question, `${n.topic} ${n.text}`) }))
+    .map((n) => ({ n, score: similarity(matchingQuestion, `${n.topic} ${n.text}`) }))
     .filter((x) => x.score >= 0.25)
     .sort((a, b) => b.score - a.score)
     .map((x) => x.n);

@@ -19,6 +19,7 @@ import {
   fixtureAnswerResponse,
 } from "@/data/seed/fixture-answer";
 import { ApproveBar } from "./ApproveBar";
+import { AnalysisTrace } from "./AnalysisTrace";
 import { CaseCard } from "./CaseCard";
 import { EvidencePanel } from "./EvidencePanel";
 import { NotesPanel } from "@/components/NotesPanel";
@@ -29,7 +30,7 @@ import type { FindingReviewUpdate } from "./ReviewActions";
 import { NotUsedList } from "./NotUsedList";
 import { ReplyEditor } from "./ReplyEditor";
 
-const DEFAULT_QUESTION = "Ik wil een vaste standplaats op de markt in Schoten. Hoe dien ik een aanvraag in?";
+const DEFAULT_QUESTION = "I want a permanent pitch at the market in Schoten. How do I apply?";
 const loadingMessages = ["Checking sources…", "Searching passages…", "Preparing findings…"];
 
 function cloneFixture(): AnswerResponse {
@@ -76,6 +77,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const [replyText, setReplyText] = useState(initialFixtureMode ? fixtureAnswerResponse.answer.reply_text : "");
   const [reviewer, setReviewer] = useState("");
   const [loading, setLoading] = useState(Boolean(initialAnswerId && !initialFixtureMode));
+  const [analysisRunning, setAnalysisRunning] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [serverBlockers, setServerBlockers] = useState<ApproveBlocker[]>([]);
@@ -83,13 +85,14 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading) return;
+    if (!analysisRunning) return;
     const timer = window.setInterval(() => setLoadingStep((step) => Math.min(step + 1, loadingMessages.length - 1)), 3500);
     return () => window.clearInterval(timer);
-  }, [loading]);
+  }, [analysisRunning]);
 
   const acceptResponse = (response: AnswerResponse, resetReply = false) => {
     setData(response);
+    setQuestion(response.answer.casus.question);
     setDraftCasus(response.answer.casus);
     setSelectedId((current) => response.answer.findings.some((finding) => finding.id === current)
       ? current
@@ -131,6 +134,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const analyse = async () => {
     if (!question.trim()) return;
     setLoading(true);
+    setAnalysisRunning(true);
     setLoadingStep(0);
     setError(null);
     setFallback(undefined);
@@ -146,6 +150,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     } catch (caught) {
       showError(caught);
     } finally {
+      setAnalysisRunning(false);
       setLoading(false);
     }
   };
@@ -171,6 +176,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const rerun = async () => {
     if (!data || !draftCasus || data.answer.status === "goedgekeurd") return;
     setLoading(true);
+    setAnalysisRunning(true);
     setLoadingStep(0);
     setError(null);
     setFallback(undefined);
@@ -190,6 +196,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     } catch (caught) {
       showError(caught);
     } finally {
+      setAnalysisRunning(false);
       setLoading(false);
     }
   };
@@ -330,15 +337,25 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       ) : null}
       {fallback ? <FallbackPassages fallback={fallback} /> : null}
 
+      <div className="top-notes">
+        <NotesPanel
+          question={question.trim() || undefined}
+          defaultTopic={draftCasus?.activity ?? data?.answer.casus.activity ?? ""}
+          author={reviewer}
+        />
+      </div>
+
       <section className="question-panel panel">
         <label htmlFor="question">Entrepreneur&apos;s question</label>
         <div className="question-row">
           <textarea id="question" rows={3} value={question} onChange={(event) => setQuestion(event.target.value)} disabled={loading} />
           <button type="button" className="button button-primary analyse-button" onClick={analyse} disabled={loading || !question.trim()}>
-            {loading ? loadingMessages[loadingStep] : "Analyse"}
+            {analysisRunning ? loadingMessages[loadingStep] : loading ? "Working…" : "Analyse"}
           </button>
         </div>
       </section>
+
+      <AnalysisTrace question={question} running={analysisRunning} activeStep={loadingStep} data={data} />
 
       {data && draftCasus ? (
         <>
@@ -372,10 +389,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           </div>
 
           <NotUsedList data={data} />
-          <div className="support-grid">
-            <NotesPanel question={data.answer.casus.question} defaultTopic={data.answer.casus.activity} author={reviewer} />
-            <WebSearchPanel question={data.answer.casus.question} runKey={data.answer.id} />
-          </div>
+          <WebSearchPanel question={data.answer.casus.question} runKey={data.answer.id} />
           <ReplyEditor
             value={replyText}
             stale={data.answer.reply_stale}

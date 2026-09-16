@@ -416,7 +416,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
                   {finding.condition ? (
                     <p className={styles.detailLine}>
-                      <strong>Condition:</strong> {finding.condition.quote}
+                      <strong>Condition (exact Dutch source wording):</strong> {finding.condition.quote}
                       {!finding.condition.quote_checked
                         ? " — text not confirmed by quote verification"
                         : ""}
@@ -450,7 +450,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                 </div>
 
                 {finding.citations.length > 0 ? (
-                  <ul className={styles.citationList} aria-label="Quotes">
+                  <ul className={styles.citationList} aria-label="Exact quotes from the Dutch sources">
                     {finding.citations.map((citation, index) => {
                       const passage = passageById.get(citation.passage_id);
                       const source = passage

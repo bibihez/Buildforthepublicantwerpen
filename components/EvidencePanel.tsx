@@ -74,7 +74,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
               <span className="chip">{source.territory}</span>
             </div>
             <div className="quote-block">
-              <p className="quote-label">Exact quote</p>
+              <p className="quote-label">Exact quote from the Dutch source</p>
               <blockquote><mark>{citation.quote}</mark></blockquote>
             </div>
             <details>

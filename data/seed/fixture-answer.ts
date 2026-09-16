@@ -180,8 +180,8 @@ const verdicts: SourceVerdict[] = [
 const draftFindings: Finding[] = [
   {
     id: 'finding-aanvraag',
-    subquestion: 'Hoe dien ik een aanvraag in?',
-    statement: 'Vul het aanvraagformulier in op de website van de gemeente Schoten.',
+    subquestion: 'How do I apply?',
+    statement: 'Complete the application form on the Municipality of Schoten website.',
     citations: [
       {
         passage_id: 'fixture-art13-aanvraag',
@@ -199,8 +199,8 @@ const draftFindings: Finding[] = [
   },
   {
     id: 'finding-voeding',
-    subquestion: 'Welke documenten moet ik toevoegen?',
-    statement: 'Voeg de toepasselijke FAVV-attesten toe aan de aanvraag.',
+    subquestion: 'Which documents must I attach?',
+    statement: 'Attach the applicable FAVV certificates to the application.',
     citations: [
       {
         passage_id: 'fixture-art13-bijlagen',
@@ -209,7 +209,7 @@ const draftFindings: Finding[] = [
     ],
     condition: {
       quote: 'enkel van toepassing bij verkoop van voeding',
-      fact_id: 'voeding',
+      fact_id: 'food',
       quote_checked: true,
     },
     conflict_with: null,
@@ -222,8 +222,8 @@ const draftFindings: Finding[] = [
   },
   {
     id: 'finding-onzeker',
-    subquestion: 'Welke documenten moet ik toevoegen?',
-    statement: 'Bij gebruik van een verwarmingstoestel moet een recent keuringsbewijs worden toegevoegd.',
+    subquestion: 'Which documents must I attach?',
+    statement: 'When using a heating appliance, attach a recent inspection certificate.',
     citations: [
       {
         passage_id: 'fixture-onzeker-brandveiligheid',
@@ -238,8 +238,8 @@ const draftFindings: Finding[] = [
   },
   {
     id: 'finding-conflict',
-    subquestion: 'Wanneer moet ik de aanvraag indienen?',
-    statement: 'Dien de aanvraag ten minste veertien dagen voor de gewenste startdatum in.',
+    subquestion: 'When must I submit the application?',
+    statement: 'Submit the application at least fourteen days before the requested start date.',
     citations: [
       {
         passage_id: 'fixture-termijn-a',
@@ -249,7 +249,7 @@ const draftFindings: Finding[] = [
     condition: null,
     conflict_with: {
       passage_id: 'fixture-termijn-b',
-      explanation: 'Een andere passage vermeldt een termijn van zeven dagen.',
+      explanation: 'Another passage gives a deadline of seven days.',
     },
     status: 'tegenstrijdig',
     status_reasons: ['The available passages give different submission deadlines.'],
@@ -264,20 +264,20 @@ const baseAnswer: Answer = {
   created_at: '2026-09-16T11:05:00.000Z',
   revision: 3,
   casus: {
-    question: 'Ik wil een vaste standplaats op de markt in Schoten. Hoe dien ik een aanvraag in?',
+    question: 'I want a permanent pitch at the market in Schoten. How do I apply?',
     municipality: 'Schoten',
     date: '2026-09-16',
-    activity: 'Een vaste standplaats met abonnement op de openbare markt aanvragen',
+    activity: 'Apply for a fixed pitch with a subscription on the public market',
     subquestions: [
-      'Hoe dien ik een aanvraag in?',
-      'Welke documenten moet ik toevoegen?',
-      'Wanneer moet ik de aanvraag indienen?',
-      'Wat kost een standplaats?',
+      'How do I apply?',
+      'Which documents must I attach?',
+      'When must I submit the application?',
+      'What does a market pitch cost?',
     ],
     facts: [
       {
-        id: 'voeding',
-        question: 'Verkoopt de aanvrager voeding?',
+        id: 'food',
+        question: 'Does the applicant sell food?',
         answer: 'onbekend',
         set_by: 'ai',
       },
@@ -286,7 +286,7 @@ const baseAnswer: Answer = {
   verdicts,
   candidates: passages.slice(0, 5).map((passage) => passage.id),
   findings: draftFindings,
-  not_found: [{ subquestion: 'Wat kost een standplaats?', decision: null }],
+  not_found: [{ subquestion: 'What does a market pitch cost?', decision: null }],
   not_used: [
     {
       source_id: historicSource.id,
@@ -321,8 +321,8 @@ const approvedFindings: Finding[] = draftFindings.map((finding) => {
     return {
       ...finding,
       review: 'gecorrigeerd',
-      corrected_statement: 'Bij gebruik van een verwarmingstoestel vraagt de gemeente om een recent keuringsbewijs; de geldigheidsdatum van deze bron is onzeker.',
-      review_reason: 'De onzekerheid over de brondatum expliciet gemaakt.',
+      corrected_statement: 'When using a heating appliance, the municipality requests a recent inspection certificate; the source validity date is uncertain.',
+      review_reason: 'Made the uncertainty about the source date explicit.',
       reviewed_by: 'Marleen',
       reviewed_at: approvedAt,
     };
@@ -334,18 +334,18 @@ const approvedFindings: Finding[] = draftFindings.map((finding) => {
       reviewed_by: 'Marleen',
       reviewed_at: approvedAt,
       conflict_decision: 'onzeker_vermelden',
-      conflict_reason: 'De twee passages zijn niet eenduidig te verzoenen.',
+      conflict_reason: 'The two passages cannot be reconciled unambiguously.',
     };
   }
   return finding;
 });
 
 const approvedReply = [
-  'Vul het aanvraagformulier in op de website van de gemeente Schoten. [1]',
-  'If the answer to “Verkoopt de aanvrager voeding?” is yes: Voeg de toepasselijke FAVV-attesten toe aan de aanvraag. [2]',
-  'Bij gebruik van een verwarmingstoestel vraagt de gemeente om een recent keuringsbewijs; de geldigheidsdatum van deze bron is onzeker. [3]',
+  'Complete the application form on the Municipality of Schoten website. [1]',
+  'If the answer to “Does the applicant sell food?” is yes: Attach the applicable FAVV certificates to the application. [2]',
+  'When using a heating appliance, the municipality requests a recent inspection certificate; the source validity date is uncertain. [3]',
   'The available sources conflict on this point; this still needs to be checked. [4][5]',
-  'No information was found in the available sources for the question: “Wat kost een standplaats?”',
+  'No information was found in the available sources for the question: “What does a market pitch cost?”',
   '',
   'Sources:',
   '[1] Marktreglement Schoten 2024, Artikel 13 §3, p. 5',
@@ -363,7 +363,7 @@ const approvedSnapshot: Snapshot = {
   passages,
   verdicts,
   findings: approvedFindings,
-  not_found: [{ subquestion: 'Wat kost een standplaats?', decision: 'vermelden' }],
+  not_found: [{ subquestion: 'What does a market pitch cost?', decision: 'vermelden' }],
   not_used: baseAnswer.not_used,
   notes_used: [],
   precedent: null,
@@ -379,7 +379,7 @@ export const fixtureApprovedAnswerResponse: AnswerResponse = {
     id: 'fixture-answer-q1-approved',
     revision: 7,
     findings: approvedFindings,
-    not_found: [{ subquestion: 'Wat kost een standplaats?', decision: 'vermelden' }],
+    not_found: [{ subquestion: 'What does a market pitch cost?', decision: 'vermelden' }],
     reply_text: approvedReply,
     reply_stale: false,
     status: 'goedgekeurd',

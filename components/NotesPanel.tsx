@@ -22,8 +22,14 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
   const [error, setError] = useState<string | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const [debouncedQuestion, setDebouncedQuestion] = useState(question?.trim() ?? "");
 
-  const listUrl = question ? `/api/notes?q=${encodeURIComponent(question)}` : "/api/notes";
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuestion(question?.trim() ?? ""), 400);
+    return () => window.clearTimeout(timer);
+  }, [question]);
+
+  const listUrl = debouncedQuestion ? `/api/notes?q=${encodeURIComponent(debouncedQuestion)}` : "/api/notes";
   useEffect(() => {
     let cancelled = false;
     fetch(listUrl)

@@ -4,11 +4,9 @@ Date: 16 September 2026, Europe/Brussels
 
 ## Outcome
 
-English is the production interface language. Dutch remains the content and evidence language for:
+English is the production interface and generated-answer language. Dutch remains unchanged only where exact source
+provenance or user-entered historical content requires it:
 
-- officer questions;
-- AI-extracted activity, subquestions and facts;
-- findings and conditions;
 - official source passages and exact citations;
 - immutable historical content and officer-entered notes.
 
@@ -24,6 +22,37 @@ The previous Dutch production version is preserved on GitHub as `archive/dutch-p
 6. Resolved the shared navigation conflict by retaining Notes and translating all four navigation links.
 7. Translated the new notes, dictation and web-search UI and API errors.
 8. Ran a live Dutch analysis through the English interface; it returned Dutch findings and exact Dutch citations.
+
+## Review upgrade — 16 September 2026
+
+1. Moved `Colleague knowledge — Notes for this question` above the entrepreneur question so officers see internal
+   context first.
+2. Added an auditable high-level analysis trace showing the entered question, workflow stages, extracted search
+   targets, source-document count and candidate-passage count. It explicitly does not expose private model reasoning.
+3. Changed all newly generated case fields, fact questions, findings, conflict explanations and reply text to English.
+4. Kept exact Dutch source quotations, exact condition wording and official source titles unchanged for auditability.
+5. Added deterministic English-to-Dutch query aliases so English questions still retrieve the Dutch source corpus.
+6. Applied the same bilingual matching to colleague notes and debounced matching while the question is being typed.
+7. Updated the development fixture to English generated content while retaining its Dutch evidence passages.
+8. Added cross-language reply-condition deduplication so English wrappers do not repeat Dutch conditions.
+
+### Review-upgrade subagent logs
+
+- **Language audit:** reviewed the workbench, history, evidence, notes, web search and development fixture; identified
+  the remaining Dutch default question and web-search instruction. No edits or commits were made by the auditor.
+- **Pipeline and fixture:** updated English generation prompts, English fixture outputs, bilingual source retrieval and
+  cross-language reply deduplication. No commit was made by the subagent; the changes were reviewed and integrated
+  centrally.
+
+### Review-upgrade verification
+
+- `npm test`: 57/57 passed across 9 files.
+- `npm run typecheck`: passed.
+- `npm run lint`: 0 errors; four pre-existing unused-variable warnings.
+- `npx next build --webpack`: passed.
+- Live browser check passed: notes appear first, the three-step trace is visible while analysis runs, and the completed
+  analysis shows four English search targets, English case fields and English findings against 10 documents and 15
+  candidate passages. Exact Dutch evidence remains visible and explicitly labelled.
 
 ## Subagent logs
 

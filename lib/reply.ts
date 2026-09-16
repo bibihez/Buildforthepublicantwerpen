@@ -58,11 +58,35 @@ function normalizedText(text: string): string {
     .trim();
 }
 
+function englishConditionAliases(condition: string): string[] {
+  const normalized = normalizedText(condition);
+  const aliases: string[] = [];
+
+  if (/verkoop.*voeding|voeding.*verkoop/.test(normalized)) {
+    aliases.push('selling food', 'sell food', 'food sales');
+  }
+  if (/gebruik.*gas|gas.*gebruik/.test(normalized)) {
+    aliases.push('using gas', 'use gas');
+  }
+  if (/gebruik.*elektriciteit|elektriciteit.*gebruik/.test(normalized)) {
+    aliases.push('using electricity', 'use electricity');
+  }
+  if (normalized.includes('rechtspersoon')) {
+    aliases.push('legal entity');
+  }
+  if (normalized.includes('verwarmingstoestel')) {
+    aliases.push('using a heating appliance', 'use a heating appliance');
+  }
+
+  return aliases;
+}
+
 function conditionAlreadyStated(text: string, condition: string): boolean {
   const normalizedStatement = normalizedText(text);
   const variants = [
     condition,
     condition.replace(/^(?:(?:enkel|alleen)\s+van\s+toepassing|only\s+applies)\s+/i, ''),
+    ...englishConditionAliases(condition),
   ]
     .map(normalizedText)
     .filter((variant) => variant.length >= 8);
@@ -135,7 +159,7 @@ function withCondition(answer: Answer, finding: Finding, paragraph: ReplyParagra
 
   if (state === 'onbekend') {
     if (conditionAlreadyStated(paragraph.text, condition)) return paragraph;
-    const readableCondition = /^(?:enkel|alleen)\s+van\s+toepassing\b/i.test(condition)
+    const readableCondition = /^(?:(?:enkel|alleen)\s+van\s+toepassing|only\s+applies)\b/i.test(condition)
       ? factCondition(answer, finding)
       : null;
     return {

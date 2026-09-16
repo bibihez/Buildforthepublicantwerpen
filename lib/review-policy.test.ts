@@ -15,7 +15,10 @@ describe('getApproveBlockers', () => {
     expect(blockers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: 'conflict_undecided', ref: 'finding-conflict' }),
-        expect.objectContaining({ code: 'not_found_undecided', ref: 'Wat kost een standplaats?' }),
+        expect.objectContaining({
+          code: 'not_found_undecided',
+          ref: 'What does a market pitch cost?',
+        }),
         expect.objectContaining({ code: 'reply_stale' }),
       ]),
     );

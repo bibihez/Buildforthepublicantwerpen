@@ -72,7 +72,7 @@ export function FindingList({
               <p className="finding-statement">{finding.corrected_statement || finding.statement}</p>
               {finding.condition ? (
                 <div className="condition-box">
-                  <strong>Condition:</strong> {finding.condition.quote}
+                  <strong>Condition (exact Dutch source wording):</strong> {finding.condition.quote}
                   <span className="condition-state">
                     {factState === "nee" ? "Not applicable to this case" : factState === "ja" ? "Applicable to this case" : "Conditional"}
                   </span>

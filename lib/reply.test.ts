@@ -23,43 +23,43 @@ describe('buildReply', () => {
   it('uses only reviewed findings and renders source footnotes', () => {
     const result = buildReply(response());
 
-    expect(result).toContain('Vul het aanvraagformulier in op de website van de gemeente Schoten. [1]');
+    expect(result).toContain(
+      'Complete the application form on the Municipality of Schoten website. [1]',
+    );
     expect(result).toContain('[1] Marktreglement Schoten 2024, Artikel 13 §3, p. 5');
-    expect(result).not.toContain('verwarmingstoestel');
-    expect(result).not.toContain('veertien dagen');
+    expect(result).not.toContain('heating appliance');
+    expect(result).not.toContain('fourteen days');
   });
 
   it('keeps an unknown condition explicit and omits it when the fact is no', () => {
     const unknown = response();
     expect(buildReply(unknown)).toContain(
-      'If the answer to “Verkoopt de aanvrager voeding?” is yes: Voeg de toepasselijke FAVV-attesten toe',
+      'If the answer to “Does the applicant sell food?” is yes: Attach the applicable FAVV certificates',
     );
 
     const no = response();
     no.answer.casus.facts[0].answer = 'nee';
-    expect(buildReply(no)).not.toContain('FAVV-attesten');
+    expect(buildReply(no)).not.toContain('FAVV certificates');
   });
 
   it('does not repeat a condition already stated in the finding', () => {
     const result = response();
     result.answer.findings[1].statement =
-      'Voeg de toepasselijke FAVV-attesten toe bij verkoop van voeding.';
+      'Attach the applicable FAVV certificates when selling food.';
 
     const reply = buildReply(result);
-    expect(reply).toContain(
-      'Voeg de toepasselijke FAVV-attesten toe bij verkoop van voeding. [2]',
-    );
+    expect(reply).toContain('Attach the applicable FAVV certificates when selling food. [2]');
     expect(reply).not.toContain('If the answer to');
   });
 
   it('does not duplicate an existing conditional prefix', () => {
     const result = response();
     result.answer.findings[1].condition!.quote = 'Als je een zelfstandige uitbater bent';
-    result.answer.casus.facts[0].question = 'Ben je een zelfstandige uitbater?';
+    result.answer.casus.facts[0].question = 'Is the applicant a self-employed operator?';
 
     const reply = buildReply(result);
     expect(reply).toContain(
-      'If the following condition applies — “je een zelfstandige uitbater bent”: Voeg de toepasselijke FAVV-attesten toe',
+      'If the following condition applies — “je een zelfstandige uitbater bent”: Attach the applicable FAVV certificates',
     );
     expect(reply).not.toContain('If Als');
   });
@@ -76,12 +76,12 @@ describe('buildReply', () => {
   it('uses corrected text and omits rejected findings', () => {
     const corrected = response();
     corrected.answer.findings[0].review = 'gecorrigeerd';
-    corrected.answer.findings[0].corrected_statement = 'Gebruik het digitale aanvraagformulier.';
-    expect(buildReply(corrected)).toContain('Gebruik het digitale aanvraagformulier. [1]');
+    corrected.answer.findings[0].corrected_statement = 'Use the digital application form.';
+    expect(buildReply(corrected)).toContain('Use the digital application form. [1]');
 
     corrected.answer.findings[0].review = 'verworpen';
-    expect(buildReply(corrected)).not.toContain('digitale aanvraagformulier');
-    expect(buildReply(corrected)).not.toContain('Vul het aanvraagformulier');
+    expect(buildReply(corrected)).not.toContain('digital application form');
+    expect(buildReply(corrected)).not.toContain('Complete the application form');
   });
 
   it('respects mention and omit decisions for missing answers without promising follow-up', () => {
@@ -90,19 +90,19 @@ describe('buildReply', () => {
     const mentioned = buildReply(result);
 
     expect(mentioned).toContain(
-      'No information was found in the available sources for the question: “Wat kost een standplaats?”',
+      'No information was found in the available sources for the question: “What does a market pitch cost?”',
     );
     expect(mentioned).not.toMatch(
       /we will contact|let you know|follow up|nemen contact op|laten weten|komen erop terug/i,
     );
 
     result.answer.not_found[0].decision = 'weglaten';
-    expect(buildReply(result)).not.toContain('Wat kost een standplaats?');
+    expect(buildReply(result)).not.toContain('What does a market pitch cost?');
   });
 
   it('handles each conflict decision without silently choosing an unresolved conflict', () => {
     const unresolved = reviewedResponse();
-    expect(buildReply(unresolved)).not.toContain('veertien dagen');
+    expect(buildReply(unresolved)).not.toContain('fourteen days');
 
     const uncertain = reviewedResponse();
     uncertain.answer.findings[3].conflict_decision = 'onzeker_vermelden';
@@ -112,19 +112,19 @@ describe('buildReply', () => {
 
     const current = reviewedResponse();
     current.answer.findings[3].conflict_decision = 'deze';
-    expect(buildReply(current)).toContain('ten minste veertien dagen');
+    expect(buildReply(current)).toContain('at least fourteen days');
 
     const other = reviewedResponse();
     other.answer.findings[3].conflict_decision = 'andere';
-    expect(buildReply(other)).toContain('Een andere passage vermeldt een termijn van zeven dagen.');
+    expect(buildReply(other)).toContain('Another passage gives a deadline of seven days.');
     expect(buildReply(other)).toContain(
       'Ontwikkelfixture afwijkende termijn, Indiening, p. 1',
     );
 
     const omitted = reviewedResponse();
     omitted.answer.findings[3].conflict_decision = 'weglaten';
-    expect(buildReply(omitted)).not.toContain('veertien dagen');
-    expect(buildReply(omitted)).not.toContain('zeven dagen');
+    expect(buildReply(omitted)).not.toContain('fourteen days');
+    expect(buildReply(omitted)).not.toContain('seven days');
   });
 
   it('can build from the frozen snapshot on an approved Answer', () => {

@@ -13,7 +13,7 @@ export function FallbackPassages({ fallback }: { fallback: Fallback }) {
         <span className="count">{fallback.candidate_ids.length}</span>
       </div>
       <p className="hint">
-        The AI produced no findings. These search results are not conclusions; review the passages directly.
+        The AI produced no findings. These original Dutch source passages are not conclusions; review them directly.
       </p>
       <ol className="fallback-list">
         {fallback.candidate_ids.map((passageId) => {
