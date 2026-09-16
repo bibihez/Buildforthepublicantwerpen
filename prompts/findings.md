@@ -28,6 +28,8 @@ For each finding:
 
 Rules:
 - No calculations. Copy amounts, deadlines and dates exactly as written.
+- A finding about a cost, fee or deadline MUST state the amount or date itself in the statement
+  ("Per marktdag: 6,00 euro"), never only "er geldt een tarief". One finding per amount.
 - No general knowledge. If the passages don't answer a subquestion, put it in not_found (copied exactly).
 - Don't mention sources that aren't in the passages.
 - Don't state that a rule applies to this entrepreneur; say what the source requires.
