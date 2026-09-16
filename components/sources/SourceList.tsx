@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import type { SourceListItem } from "@/lib/types";
 
 import { SourceEvents } from "./SourceEvents";
+import { VersionCheck } from "./VersionCheck";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 
@@ -254,6 +255,7 @@ export function SourceList({ sources, pendingId, onDeactivate }: SourceListProps
                           </button>
                         </div>
                         <SourceEvents events={source.events} />
+                        <VersionCheck sourceId={source.id} />
                       </div>
                     </td>
                   </tr>

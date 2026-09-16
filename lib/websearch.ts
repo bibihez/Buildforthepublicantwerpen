@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { models } from './llm';
-import type { WebSearchResponse, WebSearchResult } from './types';
+import type { Source, WebSearchResponse, WebSearchResult } from './types';
 
 /** Government domains a Flemish municipality's officer can treat as official publishers. */
 export const OFFICIAL_DOMAINS = [
@@ -74,4 +74,19 @@ export async function webSearch(question: string, { allDomains = false } = {}): 
     searched_at: new Date().toISOString(),
     model,
   };
+}
+
+/** Looks online for a newer official version of a source. A lead only: replacing a source is an officer upload. */
+export async function checkForNewVersion(source: Pick<Source, 'title' | 'issuer' | 'adopted_on' | 'effective_from' | 'published_on'>): Promise<WebSearchResponse> {
+  const known = [
+    source.adopted_on && `aangenomen ${source.adopted_on}`,
+    source.effective_from && `van kracht vanaf ${source.effective_from}`,
+    source.published_on && `gepubliceerd ${source.published_on}`,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return webSearch(
+    `Bestaat er een nieuwere officiële versie van "${source.title}" van ${source.issuer}${known ? ` (onze versie: ${known})` : ''}? ` +
+      'Noem de meest recente versie die je vindt, met datum. Zeg duidelijk als je geen nieuwere versie vindt.',
+  );
 }
