@@ -45,7 +45,47 @@ function cleanCondition(quote: string): string {
   if (condition.startsWith('(') && condition.endsWith(')')) {
     condition = condition.slice(1, -1).trim();
   }
-  return condition.replace(/[.:;]+$/, '').trim();
+  return condition
+    .replace(/^(?:indien|als)\s+/i, '')
+    .replace(/[.:;]+$/, '')
+    .trim();
+}
+
+function normalizedText(text: string): string {
+  return text
+    .toLocaleLowerCase('nl-BE')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function conditionAlreadyStated(text: string, condition: string): boolean {
+  const normalizedStatement = normalizedText(text);
+  const variants = [
+    condition,
+    condition.replace(/^(?:enkel|alleen)\s+van\s+toepassing\s+/i, ''),
+  ]
+    .map(normalizedText)
+    .filter((variant) => variant.length >= 8);
+
+  return variants.some((variant) => normalizedStatement.includes(variant));
+}
+
+function factCondition(answer: Answer, finding: Finding): string | null {
+  const fact = answer.casus.facts.find((candidate) => candidate.id === finding.condition?.fact_id);
+  if (!fact) return null;
+
+  const question = fact.question.trim().replace(/[?!.:;]+$/, '').trim();
+  const [verb, ...remainder] = question.split(/\s+/);
+  if (!verb || remainder.length === 0) return null;
+
+  const subject = remainder.join(' ');
+  return `${subject.charAt(0).toLocaleLowerCase('nl-BE')}${subject.slice(1)} ${verb.toLocaleLowerCase('nl-BE')}`;
+}
+
+function cleanSubquestion(subquestion: string): string {
+  const cleaned = subquestion.trim().replace(/[?!.:;]+$/, '').trim();
+  if (!cleaned) return '';
+  return `${cleaned.charAt(0).toLocaleLowerCase('nl-BE')}${cleaned.slice(1)}`;
 }
 
 function conditionState(answer: Answer, finding: Finding): 'ja' | 'nee' | 'onbekend' {
@@ -103,7 +143,14 @@ function withCondition(answer: Answer, finding: Finding, paragraph: ReplyParagra
   if (!condition) return paragraph;
 
   if (state === 'onbekend') {
-    return { ...paragraph, text: `Indien ${condition}: ${paragraph.text}` };
+    if (conditionAlreadyStated(paragraph.text, condition)) return paragraph;
+    const readableCondition = /^(?:enkel|alleen)\s+van\s+toepassing\b/i.test(condition)
+      ? factCondition(answer, finding) ?? condition
+      : condition;
+    return {
+      ...paragraph,
+      text: `Indien ${readableCondition}: ${paragraph.text}`,
+    };
   }
 
   return { ...paragraph, text: `${paragraph.text} Voorwaarde: ${sentence(condition)}` };
@@ -136,8 +183,10 @@ export function buildReply(input: AnswerResponse | Answer): string {
 
   for (const missing of answer.not_found) {
     if (missing.decision === 'vermelden') {
+      const subquestion = cleanSubquestion(missing.subquestion);
+      if (!subquestion) continue;
       paragraphs.push({
-        text: `Over ${missing.subquestion} vonden we in onze bronnen geen informatie.`,
+        text: `Over ${subquestion} vonden we in onze bronnen geen informatie.`,
         passageIds: [],
       });
     }

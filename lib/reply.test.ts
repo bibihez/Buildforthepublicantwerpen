@@ -32,12 +32,36 @@ describe('buildReply', () => {
   it('keeps an unknown condition explicit and omits it when the fact is no', () => {
     const unknown = response();
     expect(buildReply(unknown)).toContain(
-      'Indien enkel van toepassing bij verkoop van voeding: Voeg de toepasselijke FAVV-attesten toe',
+      'Indien de aanvrager voeding verkoopt: Voeg de toepasselijke FAVV-attesten toe',
     );
 
     const no = response();
     no.answer.casus.facts[0].answer = 'nee';
     expect(buildReply(no)).not.toContain('FAVV-attesten');
+  });
+
+  it('does not repeat a condition already stated in the finding', () => {
+    const result = response();
+    result.answer.findings[1].statement =
+      'Voeg de toepasselijke FAVV-attesten toe bij verkoop van voeding.';
+
+    const reply = buildReply(result);
+    expect(reply).toContain(
+      'Voeg de toepasselijke FAVV-attesten toe bij verkoop van voeding. [2]',
+    );
+    expect(reply).not.toContain('Indien de aanvrager voeding verkoopt');
+  });
+
+  it('does not duplicate an existing conditional prefix', () => {
+    const result = response();
+    result.answer.findings[1].condition!.quote = 'Als je een zelfstandige uitbater bent';
+    result.answer.casus.facts[0].question = 'Ben je een zelfstandige uitbater?';
+
+    const reply = buildReply(result);
+    expect(reply).toContain(
+      'Indien je een zelfstandige uitbater bent: Voeg de toepasselijke FAVV-attesten toe',
+    );
+    expect(reply).not.toContain('Indien Als');
   });
 
   it('retains the source condition when the fact is yes', () => {
@@ -66,7 +90,7 @@ describe('buildReply', () => {
     const mentioned = buildReply(result);
 
     expect(mentioned).toContain(
-      'Over Wat kost een standplaats? vonden we in onze bronnen geen informatie.',
+      'Over wat kost een standplaats vonden we in onze bronnen geen informatie.',
     );
     expect(mentioned).not.toMatch(/nemen contact op|laten weten|komen erop terug/i);
 
