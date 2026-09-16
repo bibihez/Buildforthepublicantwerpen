@@ -82,6 +82,8 @@ Add `"test": "vitest run"` and `"seed": "tsx scripts/seed.ts"` to `package.json`
 
 ## Step 0.2 · Shared contract + fixture (B · 12:50–13:05)
 
+> ✅ **`lib/types.ts` is done and pushed (by A).** B: only write `data/seed/fixture-answer.json`, then go to step 5.
+
 **Files:** `lib/types.ts`, `data/seed/fixture-answer.json`
 
 **Do:** create `lib/types.ts` exactly as in **Appendix A**. Hand-write `fixture-answer.json`, a realistic `Answer` for Q1 with 3 findings: application (with a condition), documents, and one `niet_gevonden`. Take the quotes from Appendix D.
@@ -91,6 +93,8 @@ Add `"test": "vitest run"` and `"seed": "tsx scripts/seed.ts"` to `package.json`
 ---
 
 ## Step 1 · Ingest PDFs into passages + seed sources (A · 13:05–13:20)
+
+> ✅ **Done (13:05).** `npm run seed` loads 8 PDFs + 1 metadata-only source. Tests: `npm test`. Passages are capped at 4,000 characters so article 13 stays whole.
 
 **Files:** `lib/db.ts`, `lib/ingest.ts`, `data/seed/sources.json` (Appendix B), `scripts/seed.ts`, `config/schoten.json`
 
