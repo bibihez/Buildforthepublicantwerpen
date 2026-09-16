@@ -12,10 +12,10 @@ export async function POST(request: Request) {
   try {
     audio = (await request.formData()).get('audio');
   } catch {
-    return fail('Verwacht een formulier met audio', 400);
+    return fail('Expected a form containing audio', 400);
   }
-  if (!(audio instanceof File) || audio.size === 0) return fail('Geen opname ontvangen', 400);
-  if (audio.size > 20 * 1024 * 1024) return fail('Opname te lang', 400);
+  if (!(audio instanceof File) || audio.size === 0) return fail('No recording received', 400);
+  if (audio.size > 20 * 1024 * 1024) return fail('Recording is too long', 400);
   try {
     const openai = new OpenAI({ timeout: 90_000, maxRetries: 1 });
     const result = await openai.audio.transcriptions.create({
@@ -27,6 +27,6 @@ export async function POST(request: Request) {
     return Response.json({ text: result.text, model: MODEL });
   } catch (err) {
     console.error('POST /api/voice failed', err);
-    return fail('Omzetten naar tekst is mislukt. Typ de notitie of probeer opnieuw.', 502);
+    return fail('Transcription failed. Type the note or try again.', 502);
   }
 }

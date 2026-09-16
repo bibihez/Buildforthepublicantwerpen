@@ -8,9 +8,9 @@ export function createNote(req: CreateNoteRequest): Note {
   const topic = req.topic?.trim();
   const text = req.text?.trim();
   const author = req.author?.trim();
-  if (!topic) throw new RequestError('Onderwerp ontbreekt', 400);
-  if (!text) throw new RequestError('Tekst ontbreekt', 400);
-  if (!author) throw new RequestError('Naam van de medewerker ontbreekt', 400);
+  if (!topic) throw new RequestError('Topic is missing', 400);
+  if (!text) throw new RequestError('Text is missing', 400);
+  if (!author) throw new RequestError('Officer name is missing', 400);
   const note: Note = { id: randomUUID(), topic, text, author, created_at: new Date().toISOString(), dictated: !!req.dictated };
   saveNote(note);
   return note;

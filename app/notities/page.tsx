@@ -1,13 +1,13 @@
 import { NotesPanel } from "@/components/NotesPanel";
 
-export default function NotitiesPage() {
+export default function NotesPage() {
   return (
     <main className="workspace">
       <section className="intro-row">
         <div>
-          <p className="eyebrow">Kennis van collega&apos;s</p>
-          <h1>Notities</h1>
-          <p>Praktische kennis van medewerkers. Nooit bewijs: een antwoord steunt alleen op officiële bronnen.</p>
+          <p className="eyebrow">Colleague knowledge</p>
+          <h1>Notes</h1>
+          <p>Practical officer knowledge. Never evidence: an answer relies only on official sources.</p>
         </div>
       </section>
       <NotesPanel />

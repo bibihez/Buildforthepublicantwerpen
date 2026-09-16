@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ApiError, Note } from "@/lib/types";
 
 type Props = {
-  /** With a question: only related notes. Without: all notes (Notities page). */
+  /** With a question: only related notes. Without: all notes (Notes page). */
   question?: string;
   defaultTopic?: string;
   author?: string;
@@ -54,15 +54,15 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
         const ext = (rec.mimeType || "audio/webm").includes("mp4") ? "mp4" : "webm";
         const form = new FormData();
         form.append("audio", blob, `notitie.${ext}`);
-        setBusy("Omzetten naar tekst…");
+        setBusy("Transcribing…");
         try {
           const response = await fetch("/api/voice", { method: "POST", body: form });
           const body = (await response.json()) as { text: string } | ApiError;
-          if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Omzetten mislukt");
+          if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Transcription failed");
           setText((current) => (current ? `${current} ${body.text}` : body.text));
           setDictated(true);
         } catch (caught) {
-          setError(caught instanceof Error ? caught.message : "Omzetten mislukt");
+          setError(caught instanceof Error ? caught.message : "Transcription failed");
         } finally {
           setBusy(null);
         }
@@ -71,7 +71,7 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
       recorder.current = rec;
       setRecording(true);
     } catch {
-      setError("Geen toegang tot de microfoon. Typ de notitie.");
+      setError("Microphone access is unavailable. Type the note instead.");
     }
   };
 
@@ -82,7 +82,7 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
   };
 
   const save = async () => {
-    setBusy("Opslaan…");
+    setBusy("Saving…");
     setError(null);
     try {
       const response = await fetch("/api/notes", {
@@ -91,12 +91,12 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
         body: JSON.stringify({ topic: topicValue, text, author: nameValue, dictated }),
       });
       const body = (await response.json()) as { note: Note } | ApiError;
-      if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Opslaan mislukt");
+      if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Save failed");
       setText("");
       setDictated(false);
       setNotes((current) => [body.note, ...current.filter((n) => n.id !== body.note.id)]);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Opslaan mislukt");
+      setError(caught instanceof Error ? caught.message : "Save failed");
     } finally {
       setBusy(null);
     }
@@ -106,12 +106,12 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
     <section className="panel notes-panel" aria-labelledby="notes-heading">
       <div className="panel-heading compact">
         <div>
-          <p className="eyebrow">Kennis van collega&apos;s</p>
-          <h2 id="notes-heading">{question ? "Notities bij deze vraag" : "Notities"}</h2>
+          <p className="eyebrow">Colleague knowledge</p>
+          <h2 id="notes-heading">{question ? "Notes for this question" : "Notes"}</h2>
         </div>
         <span className="count">{notes.length}</span>
       </div>
-      <p className="hint">Notitie medewerker — niet geverifieerd. Notities zijn geen bewijs en gaan niet naar de AI.</p>
+      <p className="hint">Officer note—not verified. Notes are not evidence and are not sent to the AI.</p>
 
       {notes.length ? (
         <ul className="notes-list">
@@ -120,27 +120,27 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
               <strong>{note.topic}</strong>
               <p>{note.text}</p>
               <span className="muted">
-                {note.author} · {new Date(note.created_at).toLocaleDateString("nl-BE")}
-                {note.dictated ? " · ingesproken" : ""}
+                {note.author} · {new Date(note.created_at).toLocaleDateString("en-GB")}
+                {note.dictated ? " · dictated" : ""}
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="muted">{question ? "Geen notities die bij deze vraag passen." : "Nog geen notities."}</p>
+        <p className="muted">{question ? "No notes match this question." : "No notes yet."}</p>
       )}
 
       <div className="inline-form notes-form">
         <label>
-          Onderwerp
-          <input value={topicValue} onChange={(event) => setTopic(event.target.value)} placeholder="Bijvoorbeeld: marktstandplaats" />
+          Topic
+          <input value={topicValue} onChange={(event) => setTopic(event.target.value)} placeholder="For example: market pitch" />
         </label>
         <label>
-          Notitie
-          <textarea rows={3} value={text} onChange={(event) => setText(event.target.value)} placeholder="Typ of spreek in. Je kan de tekst altijd aanpassen." />
+          Note
+          <textarea rows={3} value={text} onChange={(event) => setText(event.target.value)} placeholder="Type or dictate. You can always edit the text." />
         </label>
         <label>
-          Naam medewerker
+          Officer name
           <input value={nameValue} onChange={(event) => setName(event.target.value)} />
         </label>
         {error ? <div className="error-banner" role="alert">{error}</div> : null}
@@ -151,10 +151,10 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
             onClick={recording ? stopRecording : startRecording}
             disabled={!!busy}
           >
-            {recording ? "■ Stop opname" : "● Inspreken"}
+            {recording ? "■ Stop recording" : "● Dictate"}
           </button>
           <button type="button" className="button button-small button-primary" onClick={save} disabled={!!busy || recording || !topicValue.trim() || !text.trim() || !nameValue.trim()}>
-            {busy ?? "Opslaan als notitie"}
+            {busy ?? "Save as note"}
           </button>
         </div>
       </div>

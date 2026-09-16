@@ -13,11 +13,11 @@ export async function POST(request: Request) {
     return handleError('POST /api/web-search', err);
   }
   const question = body?.question?.trim();
-  if (!question) return fail('Geen zoekvraag opgegeven', 400);
+  if (!question) return fail('No search question provided', 400);
   try {
     return Response.json(await webSearch(question, { allDomains: body.all_domains === true }));
   } catch (err) {
     console.error('POST /api/web-search failed', err);
-    return fail('Zoeken op internet is mislukt. Probeer opnieuw.', 502);
+    return fail('Web search failed. Try again.', 502);
   }
 }
