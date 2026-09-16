@@ -222,3 +222,10 @@ export type WebSearchResponse = {
   searched_at: string;
   model: string;
 };
+
+// GET  /api/notes?q=vraag                                                  → { notes: Note[] }  (q: most relevant first)
+// POST /api/notes                          body: CreateNoteRequest          → { note: Note }
+// POST /api/voice  multipart: audio (webm/mp4/wav)                          → { text: string; model: string }
+/** Officer knowledge. NEVER evidence: shown as "Notitie medewerker — niet geverifieerd", never given to the AI. */
+export type Note = { id: string; topic: string; text: string; author: string; created_at: string; dictated: boolean };
+export type CreateNoteRequest = { topic: string; text: string; author: string; dictated?: boolean };

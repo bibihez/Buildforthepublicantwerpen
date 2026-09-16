@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { Answer, Passage, Source, SourceEvent } from './types';
+import type { Answer, Note, Passage, Source, SourceEvent } from './types';
 
 // Each row stores its full object as JSON, so adding a field to lib/types.ts never needs a migration.
 const DB_PATH = process.env.BRONWIJZER_DB ?? path.join(process.cwd(), 'data', 'bronwijzer.db');
@@ -117,4 +117,15 @@ export function getAnswer(id: string): Answer | null {
 export function listAnswers(): Answer[] {
   const rows = getDb().prepare('select json from answers order by created_at desc').all() as { json: string }[];
   return rows.map((r) => JSON.parse(r.json) as Answer);
+}
+
+// --- notes (officer knowledge, never evidence) -----------------------------
+
+export function saveNote(note: Note): void {
+  getDb().prepare('insert or replace into notes (id, json) values (?, ?)').run(note.id, JSON.stringify(note));
+}
+
+export function listNotes(): Note[] {
+  const rows = getDb().prepare('select json from notes').all() as { json: string }[];
+  return rows.map((r) => JSON.parse(r.json) as Note).sort((a, b) => b.created_at.localeCompare(a.created_at));
 }

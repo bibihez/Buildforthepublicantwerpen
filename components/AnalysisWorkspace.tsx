@@ -21,6 +21,7 @@ import {
 import { ApproveBar } from "./ApproveBar";
 import { CaseCard } from "./CaseCard";
 import { EvidencePanel } from "./EvidencePanel";
+import { NotesPanel } from "@/components/NotesPanel";
 import { WebSearchPanel } from "@/components/WebSearchPanel";
 import { FallbackPassages } from "./FallbackPassages";
 import { FindingList } from "./FindingList";
@@ -339,8 +340,6 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
         </div>
       </section>
 
-      <WebSearchPanel question={question} />
-
       {data && draftCasus ? (
         <>
           {data.answer.precedent ? (
@@ -373,6 +372,10 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           </div>
 
           <NotUsedList data={data} />
+          <div className="support-grid">
+            <NotesPanel question={data.answer.casus.question} defaultTopic={data.answer.casus.activity} author={reviewer} />
+            <WebSearchPanel question={data.answer.casus.question} />
+          </div>
           <ReplyEditor
             value={replyText}
             stale={data.answer.reply_stale}

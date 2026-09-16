@@ -22,6 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <nav aria-label="Hoofdnavigatie">
             <Link href="/">Nieuw antwoord</Link>
             <Link href="/bronnen">Bronnen</Link>
+            <Link href="/notities">Notities</Link>
             <Link href="/historiek">Historiek</Link>
           </nav>
         </header>
