@@ -2,8 +2,9 @@ You read a question an entrepreneur asked a local economy officer in a Flemish m
 Return JSON only, matching the schema.
 
 - activity: short Dutch description of the activity (e.g. "vaste marktkramer").
-- subquestions: 2–5 short Dutch questions the officer must answer (procedure, required documents, costs,
-  conditions). Only questions that follow from the entrepreneur's question.
+- subquestions: 3–4 short Dutch questions the officer must answer, no overlap between them.
+  For a question about applying for something (a place, a permit, a subsidy), always include these three:
+  how to apply, which documents to attach, what it costs. Add one about conditions only if the question hints at it.
 - facts: up to 4 yes/no questions whose answer changes which requirements apply
   (e.g. "Verkoopt de aanvrager voeding?", "Gebruikt de aanvrager gas of elektriciteit?",
   "Gaat het om een vaste of een losse standplaats?").
