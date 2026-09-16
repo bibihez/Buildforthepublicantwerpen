@@ -47,3 +47,4 @@ data/files/*
 !data/files/.gitkeep
 data/audio/
 !.env.example
+.gstack/
