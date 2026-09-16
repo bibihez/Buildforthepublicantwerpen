@@ -2,17 +2,20 @@
 
 Last verified: 16 September 2026, Europe/Brussels
 
+**BUILD COMPLETE — ready for live acceptance testing.**
+
 | Part of the build | Status and comments |
 |---|---|
 | B — Officer interface | Complete and pushed. Question, evidence, review, correction, rejection, reply, approval, history and source-management screens are implemented. |
 | B — Reply and approval policy | Complete and pushed. `buildReply(input: AnswerResponse \| Answer)` and `getApproveBlockers(answer, expectedRevision?)` are browser/server-pure and imported by A's server. |
-| B — Final integration validation | Pending. Complete the final workflow against the finished backend after the items below are resolved. |
-| A — Core backend | Complete and pushed through the precedent implementation on `89ff549`. |
-| A — Q1 output quality | Needs adjustment for the demonstration. The real Q1 pipeline returned 22 open findings. Reduce or deduplicate while retaining independently reviewable requirements and conditions. |
-| A/B — AI failure fallback | Contract decision required. The build plan asks B to display candidate passages after an AI failure, but the current 502 response contains only `ApiError`. A must return safe candidate data before B can render it. |
-| Shared — Fee regulation test | Pending. Upload `Schoten-markt-en-kermisretributies-2026-2031.pdf`, rerun Q1 and verify that the missing price becomes a grounded finding. |
-| Shared — Complete dry run | Pending. Run question → evidence → review → reply → approval → history → precedent banner. |
-| Shared — Release readiness | After the dry run, reset and seed the demonstration state, fix only critical workflow issues, then freeze the code. |
+| B — Reply wording polish | Complete and pushed in `73b0719`. Conditions are not repeated, `Indien Als` is prevented, and missing-question text is lowercased with trailing punctuation removed. |
+| B — Final integration validation | Complete. Type checking, 51 tests, production build, lint and the full browser workflow passed against A's latest backend. |
+| A — Core backend | Complete and pushed. Real evidence pipeline, persistence, source upload, answer history, precedent handling and structured AI-failure fallback are live. |
+| A — Q1 output quality | Complete. Q1 was reduced from 22 findings to approximately 10–11 review findings while retaining the relevant evidence. |
+| A/B — AI failure fallback | Complete. A returns `{ candidate_ids, sources, passages }`; B renders the passages in candidate order. |
+| Shared — Fee regulation test | Complete. The 2026–2031 fee regulation uploaded successfully as 12 passages and grounded the €6 per market day / €78 per half-year finding. |
+| Shared — Complete dry run | Complete. Question → evidence → review and correction → missing-info decision → reply → approval → immutable history → fee upload → rerun → precedent banner was verified. |
+| Shared — Release readiness | Ready for live acceptance testing. Dutch remains the production default; English can be introduced as a temporary test mode. |
 
 ## B commits
 
@@ -20,17 +23,24 @@ Last verified: 16 September 2026, Europe/Brussels
 - `34bae3b` — complete officer review workflow and API client.
 - `0f94341` — immutable snapshot history and new-version handoff.
 - `ebe2f57` — source list, upload, deactivation and audit history.
+- `467400a` — structured fallback-passage display after an AI failure.
+- `73b0719` — normalized conditions and missing-question wording in generated replies.
 
 ## Verification log
 
 - Real `POST /api/answers` returned HTTP 200 using the local API key.
-- Real Q1 result: 22 checked findings, one missing price answer, four relevant excluded sources, nine source records and sixteen evidence passages.
+- Q1 returned approximately 10–11 review findings after the output-quality adjustment.
 - `npm run typecheck` passed.
-- `npm test` passed: 49/49.
+- `npm test` passed: 51/51.
 - `npx next build --webpack` passed, including all pages and API routes.
 - Main workflow, sources and history screens were visually checked in the local browser.
+- Pre-upload Q1 was reviewed, saved, approved and verified as an immutable history snapshot.
+- `Schoten-markt-en-kermisretributies-2026-2031.pdf` uploaded with HTTP 200 as 12 passages.
+- Post-upload Q1 showed the new-source precedent banner and grounded the market fees and included electricity distribution box.
+- The post-upload answer was corrected, regenerated with citations, approved and verified as a second immutable snapshot.
+- Reply-wording regressions are covered by dedicated tests for repeated conditions, `Indien Als`, capitalization and trailing question marks.
 - The default Turbopack production build cannot start its CSS worker in the restricted execution sandbox; the webpack production build succeeds.
 
 ## Shared next action
 
-Machine A should confirm the Q1 output adjustment and the AI-failure response decision. Machine B can then run and document the final fee-upload and approval-history dry run.
+Begin live acceptance testing. If English is needed for easier review, implement it as a temporary test-language toggle while retaining Dutch as the production default.
