@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import seedSources from '../data/seed/sources.json';
-import { addSourceEvent, closeDb, insertPassages, resetDb, upsertSource, usingPostgres } from '../lib/db';
+import { addSourceEvent, closeDb, dbBackend, insertPassages, resetDb, upsertSource } from '../lib/db';
 import { saveFile, usingSupabaseStorage } from '../lib/storage';
 import { ingestPdf } from '../lib/ingest';
 import type { Source } from '../lib/types';
@@ -10,7 +10,7 @@ import type { Source } from '../lib/types';
 type SeedEntry = Omit<Source, 'sha256' | 'added_at' | 'added_by'> & { seed: boolean };
 
 async function main() {
-  console.log(`database: ${usingPostgres() ? 'Postgres (Supabase)' : 'local SQLite'} · files: ${usingSupabaseStorage() ? 'Supabase Storage' : 'local disk'}\n`);
+  console.log(`database: ${dbBackend()} · files: ${usingSupabaseStorage() ? 'Supabase Storage' : 'local disk'}\n`);
   await resetDb();
   const now = new Date().toISOString();
   let files = 0;

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Source PDFs. Local: data/files on disk. Deployed: a private Supabase Storage bucket, same relative keys.
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/rest\/v1\/?$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const BUCKET = process.env.SUPABASE_BUCKET || 'bronnen';
 
