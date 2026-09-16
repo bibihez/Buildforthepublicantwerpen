@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, CheckCircle, Files, Sparkle } from "@phosphor-icons/react";
 import { answerClient, ClientError } from "@/lib/client";
 import { buildReply } from "@/lib/reply";
 import { getApproveBlockers } from "@/lib/review-policy";
@@ -32,6 +33,12 @@ import { ReplyEditor } from "./ReplyEditor";
 
 const DEFAULT_QUESTION = "I want a permanent pitch at the market in Schoten. How do I apply?";
 const loadingMessages = ["Checking sources…", "Searching passages…", "Preparing findings…"];
+const suggestedQuestions = [
+  "How do I apply for a fixed market pitch in Schoten?",
+  "Which permits do I need for a food truck?",
+  "What are the rules for a terrace?",
+  "Which documents are required for a retail activity?",
+];
 
 function cloneFixture(): AnswerResponse {
   return JSON.parse(JSON.stringify(fixtureAnswerResponse)) as AnswerResponse;
@@ -78,6 +85,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const [reviewer, setReviewer] = useState("");
   const [loading, setLoading] = useState(Boolean(initialAnswerId && !initialFixtureMode));
   const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [webSearchRun, setWebSearchRun] = useState(initialFixtureMode ? 1 : 0);
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [serverBlockers, setServerBlockers] = useState<ApproveBlocker[]>([]);
@@ -90,7 +98,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     return () => window.clearInterval(timer);
   }, [analysisRunning]);
 
-  const acceptResponse = (response: AnswerResponse, resetReply = false) => {
+  const acceptResponse = (response: AnswerResponse, resetReply = false, refreshWebSearch = false) => {
     setData(response);
     setQuestion(response.answer.casus.question);
     setDraftCasus(response.answer.casus);
@@ -98,6 +106,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       ? current
       : response.answer.findings[0]?.id || null);
     if (resetReply) setReplyText(response.answer.reply_text || buildReply(response));
+    if (refreshWebSearch) setWebSearchRun((current) => current + 1);
     setServerBlockers([]);
     setFallback(undefined);
     setError(null);
@@ -119,7 +128,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     answerClient.get(initialAnswerId)
       .then((response) => {
         if (cancelled) return;
-        acceptResponse(response, true);
+        acceptResponse(response, true, true);
         setNotice("New draft version opened from history.");
       })
       .catch((caught: unknown) => {
@@ -143,9 +152,9 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       if (fixtureMode) {
         const fixture = cloneFixture();
         fixture.answer.casus.question = question.trim();
-        acceptResponse(fixture, true);
+        acceptResponse(fixture, true, true);
       } else {
-        acceptResponse(await answerClient.create({ question: question.trim() }), true);
+        acceptResponse(await answerClient.create({ question: question.trim() }), true, true);
       }
     } catch (caught) {
       showError(caught);
@@ -186,12 +195,12 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           ...data,
           answer: { ...data.answer, casus: draftCasus, revision: data.answer.revision + 1, reply_stale: true },
         };
-        acceptResponse(response);
+        acceptResponse(response, false, true);
       } else {
         acceptResponse(await answerClient.rerun(data.answer.id, {
           revision: data.answer.revision,
           casus: draftCasus,
-        }));
+        }), false, true);
       }
     } catch (caught) {
       showError(caught);
@@ -294,7 +303,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setFixtureMode(true);
     setQuestion(fixture.answer.casus.question);
     setNotice(null);
-    acceptResponse(fixture, true);
+    acceptResponse(fixture, true, true);
   };
 
   const leaveFixture = () => {
@@ -309,23 +318,54 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   };
 
   return (
-    <main className="workspace">
-      <section className="intro-row">
-        <div>
-          <p className="eyebrow">Evidence-based answers</p>
-          <h1>Create a verifiable answer</h1>
-          <p>Analyse the question, verify every quote and approve one specific answer version.</p>
-        </div>
-        {process.env.NODE_ENV !== "production" ? (
-          <button type="button" className="button button-quiet" onClick={fixtureMode ? leaveFixture : openFixture}>
-            {fixtureMode ? "Use live API" : "Open development fixture"}
-          </button>
-        ) : null}
-      </section>
+    <main className="workspace workbench">
+      <aside className="workbench-rail" aria-label="Question context">
+        <NotesPanel
+          question={question.trim() || undefined}
+          defaultTopic={draftCasus?.activity ?? data?.answer.casus.activity ?? ""}
+          author={reviewer}
+        />
+
+        <section className="panel source-ready-card">
+          <span className="context-icon" aria-hidden="true"><Files weight="duotone" /></span>
+          <div>
+            <strong>{data ? `${Object.keys(data.sources).length} source documents checked` : "Official source library ready"}</strong>
+            <p>Bronwijzer searches uploaded regulations and guidance after you analyse the question.</p>
+          </div>
+        </section>
+
+        <section className="trust-card">
+          <CheckCircle aria-hidden="true" weight="fill" />
+          <div>
+            <strong>Trusted information, in your hands</strong>
+            <p>Every finding links to an exact source quote. You remain responsible for the final answer.</p>
+          </div>
+        </section>
+      </aside>
+
+      <div className="workbench-main">
+        <section className="assistant-intro">
+          <span className="assistant-mark" aria-hidden="true"><Sparkle weight="fill" /></span>
+          <p className="assistant-kicker">Evidence assistant for local economy</p>
+          <h1>What can I help you verify today?</h1>
+          <p>Ask about permits, regulations or procedures. Bronwijzer will trace the answer back to official sources.</p>
+          <div className="suggested-questions" aria-label="Suggested questions">
+            {suggestedQuestions.map((suggestion) => (
+              <button type="button" onClick={() => setQuestion(suggestion)} disabled={loading} key={suggestion}>
+                {suggestion}
+              </button>
+            ))}
+          </div>
+          {process.env.NODE_ENV !== "production" ? (
+            <button type="button" className="button button-quiet fixture-trigger" onClick={fixtureMode ? leaveFixture : openFixture}>
+              {fixtureMode ? "Use live API" : "Open development fixture"}
+            </button>
+          ) : null}
+        </section>
 
       <div className="scope-banner">
         <strong>Limited source set: {data ? Object.keys(data.sources).length : "available"} documents.</strong>
-        <span> Not found means no evidence in these sources—not that no rule exists.</span>
+        <span> Not found means there is no evidence in these sources. It does not mean that no rule exists.</span>
       </div>
       {fixtureMode ? <div className="fixture-banner"><strong>Development mode.</strong> {FIXTURE_DEVELOPMENT_NOTICE}</div> : null}
       {notice ? <div className="success-banner" role="status">{notice}</div> : null}
@@ -337,25 +377,32 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       ) : null}
       {fallback ? <FallbackPassages fallback={fallback} /> : null}
 
-      <div className="top-notes">
-        <NotesPanel
-          question={question.trim() || undefined}
-          defaultTopic={draftCasus?.activity ?? data?.answer.casus.activity ?? ""}
-          author={reviewer}
-        />
-      </div>
-
       <section className="question-panel panel">
-        <label htmlFor="question">Entrepreneur&apos;s question</label>
+        <label htmlFor="question">Ask Bronwijzer</label>
         <div className="question-row">
-          <textarea id="question" rows={3} value={question} onChange={(event) => setQuestion(event.target.value)} disabled={loading} />
+          <textarea
+            id="question"
+            rows={3}
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            disabled={loading}
+            placeholder="Ask a question about a permit, regulation or procedure"
+          />
           <button type="button" className="button button-primary analyse-button" onClick={analyse} disabled={loading || !question.trim()}>
-            {analysisRunning ? loadingMessages[loadingStep] : loading ? "Working…" : "Analyse"}
+            <span>{analysisRunning ? loadingMessages[loadingStep] : loading ? "Working…" : "Analyse"}</span>
+            {!loading ? <ArrowRight aria-hidden="true" weight="bold" /> : null}
           </button>
         </div>
       </section>
 
       <AnalysisTrace question={question} running={analysisRunning} activeStep={loadingStep} data={data} />
+
+      {data ? (
+        <WebSearchPanel
+          question={data.answer.casus.question}
+          runKey={`${data.answer.id}:${webSearchRun}`}
+        />
+      ) : null}
 
       {data && draftCasus ? (
         <>
@@ -389,7 +436,6 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           </div>
 
           <NotUsedList data={data} />
-          <WebSearchPanel question={data.answer.casus.question} runKey={data.answer.id} />
           <ReplyEditor
             value={replyText}
             stale={data.answer.reply_stale}
@@ -408,13 +454,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
             onApprove={approve}
           />
         </>
-      ) : (
-        <section className="empty-workspace">
-          <span className="empty-icon" aria-hidden="true">§</span>
-          <h2>Start with the entrepreneur&apos;s question</h2>
-          <p>Bronwijzer only shows findings that refer to official source passages.</p>
-        </section>
-      )}
+      ) : null}
+      </div>
     </main>
   );
 }

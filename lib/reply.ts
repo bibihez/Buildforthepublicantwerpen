@@ -105,7 +105,8 @@ function factCondition(answer: Answer, finding: Finding): string | null {
 
 function conditionState(answer: Answer, finding: Finding): 'ja' | 'nee' | 'onbekend' {
   if (!finding.condition) return 'ja';
-  return answer.casus.facts.find((fact) => fact.id === finding.condition?.fact_id)?.answer ?? 'onbekend';
+  const fact = answer.casus.facts.find((item) => item.id === finding.condition?.fact_id);
+  return fact?.set_by === 'officer' ? fact.answer : 'onbekend';
 }
 
 function chosenFindingText(finding: Finding): ReplyParagraph | null {
@@ -166,7 +167,7 @@ function withCondition(answer: Answer, finding: Finding, paragraph: ReplyParagra
       ...paragraph,
       text: readableCondition
         ? `If ${readableCondition}: ${paragraph.text}`
-        : `If the following condition applies — “${condition}”: ${paragraph.text}`,
+        : `If this source condition applies (“${condition}”): ${paragraph.text}`,
     };
   }
 
@@ -176,7 +177,7 @@ function withCondition(answer: Answer, finding: Finding, paragraph: ReplyParagra
 function pageLabel(passage: Passage): string {
   return passage.page_from === passage.page_to
     ? `p. ${passage.page_from}`
-    : `p. ${passage.page_from}–${passage.page_to}`;
+    : `p. ${passage.page_from}-${passage.page_to}`;
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { AnswerResponse, Citation, Level, Nature, Passage } from "@/lib/types";
+import { ArrowSquareOut } from "@phosphor-icons/react";
 
 const levelLabels: Record<Level, string> = {
   federaal: "Federal",
@@ -29,7 +30,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
     return (
       <aside className="panel evidence-panel">
         <p className="eyebrow">Evidence</p>
-        <h2>Source passages</h2>
+        <h2>Official evidence</h2>
         <div className="empty-state">
           <p>Select a finding to review its evidence.</p>
         </div>
@@ -42,7 +43,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
       <div className="panel-heading">
         <div>
           <p className="eyebrow">Evidence</p>
-          <h2 id="evidence-heading">Source passages</h2>
+          <h2 id="evidence-heading">Official evidence</h2>
         </div>
         <span className="count">{finding.citations.length}</span>
       </div>
@@ -52,6 +53,8 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
         const passage = data.passages[citation.passage_id];
         const source = passage ? data.sources[passage.source_id] : undefined;
         const verdict = source ? data.answer.verdicts.find((item) => item.source_id === source.id) : undefined;
+        const surrounding = passage ? excerpt(passage, citation) : "";
+        const quoteIndex = surrounding.indexOf(citation.quote);
 
         if (!passage || !source) {
           return <p className="error-banner" key={`${citation.passage_id}-${index}`}>Passage {citation.passage_id} is missing from the answer.</p>;
@@ -62,10 +65,10 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
             <div className="citation-header">
               <div>
                 <strong>{source.short_title}</strong>
-                <p>{passage.article || "Passage"} · p. {passage.page_from}{passage.page_to !== passage.page_from ? `–${passage.page_to}` : ""}</p>
+                <p>{passage.article || "Passage"}, p. {passage.page_from}{passage.page_to !== passage.page_from ? `-${passage.page_to}` : ""}</p>
               </div>
               <a className="button button-small button-secondary" href={`/files/${source.id}#page=${passage.page_from}`} target="_blank" rel="noreferrer">
-                Open source
+                Open source <ArrowSquareOut aria-label="opens in a new tab" />
               </a>
             </div>
             <div className="chip-row">
@@ -79,9 +82,13 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
             </div>
             <details>
               <summary>Show surrounding passage</summary>
-              <p className="passage-text">{excerpt(passage, citation)}</p>
+              <p className="passage-text">
+                {quoteIndex >= 0 ? (
+                  <>{surrounding.slice(0, quoteIndex)}<mark>{citation.quote}</mark>{surrounding.slice(quoteIndex + citation.quote.length)}</>
+                ) : surrounding}
+              </p>
             </details>
-            <div className="source-check">
+            <div className={`source-check source-check-${verdict?.verdict ?? "onzeker"}`}>
               <strong>Source check</strong>
               <p className="verdict-line">
                 <span aria-hidden="true">{verdict?.verdict === "gecontroleerd" ? "✓" : verdict?.verdict === "onzeker" ? "?" : "×"}</span>

@@ -356,6 +356,17 @@
   border-bottom: 0;
 }
 
+.factDescription span,
+.factDescription small {
+  display: block;
+}
+
+.factDescription small {
+  margin-top: 3px;
+  color: #6b7780;
+  font-size: 0.74rem;
+}
+
 .valueLabel {
   flex: 0 0 auto;
   border-radius: 999px;

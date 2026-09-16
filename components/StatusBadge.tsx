@@ -14,7 +14,7 @@ const reviewLabels: Record<Exclude<Finding["review"], "open">, string> = {
 
 export function StatusBadge({ finding }: { finding: Finding }) {
   if (finding.review === "gecorrigeerd") {
-    return <span className="badge badge-warning">Text changed—not covered by quote</span>;
+    return <span className="badge badge-warning">Text changed, not covered by quote</span>;
   }
   if (finding.review !== "open") {
     return <span className={`badge badge-${finding.review}`}>{reviewLabels[finding.review]}</span>;

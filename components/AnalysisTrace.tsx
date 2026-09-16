@@ -73,7 +73,7 @@ export function AnalysisTrace({ question, running, activeStep, data }: Props) {
             <ul>{settledData.answer.casus.subquestions.map((item) => <li key={item}>{item}</li>)}</ul>
           </div>
           <p>
-            <strong>Scope checked:</strong> {sourceCount} source documents · {passageCount} candidate passages
+            <strong>Scope checked:</strong> {sourceCount} source documents / {passageCount} candidate passages
           </p>
         </div>
       ) : (

@@ -141,7 +141,7 @@ export function HistoryList() {
                       {approved ? "Approved" : "Draft"}
                     </span>
                   </td>
-                  <td>{answer.approved_by || "—"}</td>
+                  <td>{answer.approved_by || "Not approved"}</td>
                 </tr>
               );
             })}

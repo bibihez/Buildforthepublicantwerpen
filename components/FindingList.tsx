@@ -15,7 +15,8 @@ type Props = {
 
 function conditionState(finding: Finding, facts: Fact[]) {
   if (!finding.condition) return null;
-  return facts.find((fact) => fact.id === finding.condition?.fact_id)?.answer || "onbekend";
+  const fact = facts.find((item) => item.id === finding.condition?.fact_id);
+  return fact?.set_by === "officer" ? fact.answer : "onbekend";
 }
 
 export function FindingList({
@@ -63,7 +64,6 @@ export function FindingList({
             <article
               key={finding.id}
               className={`finding-card ${selectedId === finding.id ? "selected" : ""} ${notApplicable ? "not-applicable" : ""}`}
-              onClick={() => onSelect(finding.id)}
             >
               <div className="finding-topline">
                 <p className="subquestion">{finding.subquestion}</p>
@@ -79,6 +79,14 @@ export function FindingList({
                 </div>
               ) : null}
               {finding.status_reasons.map((reason) => <p className="status-reason" key={reason}>{reason}</p>)}
+              <button
+                type="button"
+                className="finding-evidence-button"
+                aria-pressed={selectedId === finding.id}
+                onClick={() => onSelect(finding.id)}
+              >
+                {selectedId === finding.id ? "Evidence shown below" : "Review exact evidence"}
+              </button>
               <ReviewActions finding={finding} reviewer={reviewer} disabled={disabled} onReview={onReview} />
             </article>
           );

@@ -31,7 +31,7 @@ export async function draftCase(question: string, date?: string): Promise<Casus>
     date: date || draft.date || today(),
     activity: draft.activity,
     subquestions: draft.subquestions,
-    facts: draft.facts.map((f) => ({ ...f, set_by: 'ai' as const })),
+    facts: draft.facts.map((f) => ({ ...f, set_by: 'ai' as const, origin: 'question' as const })),
   };
 }
 
@@ -55,7 +55,18 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
   const user = [
     `## Case`,
     JSON.stringify(
-      { question: casus.question, municipality: casus.municipality, date: casus.date, activity: casus.activity, subquestions: casus.subquestions, facts: casus.facts.map(({ id, question, answer }) => ({ id, question, answer })) },
+      {
+        question: casus.question,
+        municipality: casus.municipality,
+        date: casus.date,
+        activity: casus.activity,
+        subquestions: casus.subquestions,
+        facts: casus.facts.map(({ id, question, answer, set_by }) => ({
+          id,
+          question,
+          answer: set_by === 'officer' ? answer : 'onbekend',
+        })),
+      },
       null,
       2,
     ),

@@ -48,6 +48,8 @@ export type Fact = {
   question: string;                 // "Verkoopt de aanvrager voeding?"
   answer: 'ja' | 'nee' | 'onbekend';
   set_by: 'ai' | 'officer';
+  /** Optional for backward-compatible snapshots created before fact provenance was recorded. */
+  origin?: 'question' | 'source_condition';
 };
 
 export type Casus = {

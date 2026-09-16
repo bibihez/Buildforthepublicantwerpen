@@ -352,7 +352,10 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
           <ul className={styles.factList} aria-label="Case facts">
             {snapshot.casus.facts.map((fact) => (
               <li key={fact.id}>
-                <span>{fact.question}</span>
+                <span className={styles.factDescription}>
+                  <span>{fact.question}</span>
+                  <small>{fact.set_by === "officer" ? "Confirmed by officer" : "AI suggestion not officer-confirmed"}</small>
+                </span>
                 <span className={styles.valueLabel}>{factLabel(fact.answer)}</span>
               </li>
             ))}
@@ -403,7 +406,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
                   <p className={styles.detailLine}>
                     Automated status: {statusLabel(finding.status)}
-                    {finding.bulk ? " · confirmed in bulk" : ""}
+                    {finding.bulk ? ", confirmed in bulk" : ""}
                   </p>
 
                   {finding.status_reasons.length > 0 ? (
@@ -418,7 +421,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                     <p className={styles.detailLine}>
                       <strong>Condition (exact Dutch source wording):</strong> {finding.condition.quote}
                       {!finding.condition.quote_checked
-                        ? " — text not confirmed by quote verification"
+                        ? ", text not confirmed by quote verification"
                         : ""}
                     </p>
                   ) : null}
@@ -443,7 +446,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                       <strong>Conflict decision:</strong>{" "}
                       {decisionLabel(finding.conflict_decision)}
                       {finding.conflict_reason
-                        ? ` — ${finding.conflict_reason}`
+                        ? `: ${finding.conflict_reason}`
                         : ""}
                     </p>
                   ) : null}
@@ -465,9 +468,9 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                           <p className={styles.sourceMeta}>
                             {passage?.article || "No article specified"}
                             {passage
-                              ? ` · p. ${passage.page_from}${
+                              ? `, p. ${passage.page_from}${
                                   passage.page_to !== passage.page_from
-                                    ? `–${passage.page_to}`
+                                    ? `-${passage.page_to}`
                                     : ""
                                 }`
                               : ""}
@@ -526,8 +529,8 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                     </span>
                   </div>
                   <p className={styles.sourceMeta}>
-                    {source.short_title} · {levelLabel(source.level)} ·{" "}
-                    {natureLabel(source.nature)} · {source.territory}
+                    {source.short_title}, {levelLabel(source.level)}, {" "}
+                    {natureLabel(source.nature)}, {source.territory}
                   </p>
                   <p className={styles.detailLine}>
                     Source check: {verdictLabel(verdict?.verdict)}

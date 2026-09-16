@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Microphone, NotePencil, Stop } from "@phosphor-icons/react";
 import type { ApiError, Note } from "@/lib/types";
 
 type Props = {
@@ -117,7 +118,7 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
         </div>
         <span className="count">{notes.length}</span>
       </div>
-      <p className="hint">Officer note—not verified. Notes are not evidence and are not sent to the AI.</p>
+      <p className="hint">Officer knowledge. Not verified, not evidence and never sent to the AI.</p>
 
       {notes.length ? (
         <ul className="notes-list">
@@ -126,8 +127,8 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
               <strong>{note.topic}</strong>
               <p>{note.text}</p>
               <span className="muted">
-                {note.author} · {new Date(note.created_at).toLocaleDateString("en-GB")}
-                {note.dictated ? " · dictated" : ""}
+                {note.author}, {new Date(note.created_at).toLocaleDateString("en-GB")}
+                {note.dictated ? ", dictated" : ""}
               </span>
             </li>
           ))}
@@ -136,6 +137,8 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
         <p className="muted">{question ? "No notes match this question." : "No notes yet."}</p>
       )}
 
+      <details className="notes-composer" open={!question}>
+        <summary><NotePencil aria-hidden="true" /> Add colleague note</summary>
       <div className="inline-form notes-form">
         <label>
           Topic
@@ -157,13 +160,14 @@ export function NotesPanel({ question, defaultTopic = "", author = "" }: Props) 
             onClick={recording ? stopRecording : startRecording}
             disabled={!!busy}
           >
-            {recording ? "■ Stop recording" : "● Dictate"}
+            {recording ? <><Stop aria-hidden="true" weight="fill" /> Stop recording</> : <><Microphone aria-hidden="true" /> Dictate</>}
           </button>
           <button type="button" className="button button-small button-primary" onClick={save} disabled={!!busy || recording || !topicValue.trim() || !text.trim() || !nameValue.trim()}>
             {busy ?? "Save as note"}
           </button>
         </div>
       </div>
+      </details>
     </section>
   );
 }

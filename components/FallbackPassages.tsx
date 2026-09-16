@@ -27,7 +27,7 @@ export function FallbackPassages({ fallback }: { fallback: Fallback }) {
               <div className="citation-header">
                 <div>
                   <strong>{source?.short_title || passage.source_id}</strong>
-                  <p>{passage.article || "Passage"} · p. {passage.page_from}{passage.page_to !== passage.page_from ? `–${passage.page_to}` : ""}</p>
+                  <p>{passage.article || "Passage"}, p. {passage.page_from}{passage.page_to !== passage.page_from ? `-${passage.page_to}` : ""}</p>
                 </div>
                 {source ? (
                   <a className="button button-small button-secondary" href={`/files/${source.id}#page=${passage.page_from}`} target="_blank" rel="noreferrer">

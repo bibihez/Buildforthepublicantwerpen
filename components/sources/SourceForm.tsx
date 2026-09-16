@@ -139,7 +139,7 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
       setEffectiveFromUnknown(false);
       setState({
         kind: "success",
-        message: `Source added — ${result.passages} ${result.passages === 1 ? "passage" : "passages"}.`,
+        message: `Source added. ${result.passages} ${result.passages === 1 ? "passage" : "passages"}.`,
       });
     } catch (error) {
       setState({

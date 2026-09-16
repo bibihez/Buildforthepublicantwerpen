@@ -85,7 +85,13 @@ export function ground(
       }
       if (!knownFacts.has(id)) {
         knownFacts.add(id);
-        added_facts.push({ id, question: f.condition.fact_question.trim() || `Does this apply to the applicant: "${f.condition.quote}"?`, answer: 'onbekend', set_by: 'ai' });
+        added_facts.push({
+          id,
+          question: f.condition.fact_question.trim() || `Does this apply to the applicant: "${f.condition.quote}"?`,
+          answer: 'onbekend',
+          set_by: 'ai',
+          origin: 'source_condition',
+        });
       }
     }
 

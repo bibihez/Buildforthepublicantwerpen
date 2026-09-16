@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowSquareOut, GlobeHemisphereWest, SpinnerGap, UploadSimple, Warning } from "@phosphor-icons/react";
 import type { ApiError, WebSearchResponse } from "@/lib/types";
 
 type Outcome = { key: string; result: WebSearchResponse | null; error: string | null };
@@ -48,17 +50,26 @@ export function WebSearchPanel({ question, runKey }: { question: string; runKey:
   const result = current?.result ?? null;
 
   return (
-    <section className="panel web-search-panel" aria-labelledby="web-search-heading" aria-busy={!current}>
+    <section className="panel web-search-panel" aria-labelledby="web-search-heading" aria-busy={!current} aria-live="polite">
       <div className="panel-heading compact">
-        <div>
-          <p className="eyebrow">Find sources</p>
-          <h2 id="web-search-heading">Found on the web</h2>
+        <div className="web-search-title">
+          <span className="web-search-icon" aria-hidden="true"><GlobeHemisphereWest weight="duotone" /></span>
+          <div>
+            <p className="eyebrow">Parallel discovery</p>
+            <h2 id="web-search-heading">Web source leads</h2>
+          </div>
         </div>
-        {!current ? <span className="muted">Searching…</span> : null}
+        <span className="badge badge-web-lead"><Warning aria-hidden="true" weight="fill" /> Not evidence</span>
       </div>
       <p className="hint">
-        Web result—not verified and not evidence. A document only counts after an officer uploads it under Sources.
+        This runs separately after the official-source analysis. Upload and verify a document before using it as evidence.
       </p>
+      {!current ? (
+        <div className="web-search-loading" role="status">
+          <SpinnerGap className="spin" aria-hidden="true" />
+          <span>Searching government websites for relevant documents…</span>
+        </div>
+      ) : null}
       {current?.error ? <div className="error-banner" role="alert">{current.error}</div> : null}
       {result ? (
         <div className="web-search-result">
@@ -70,10 +81,12 @@ export function WebSearchPanel({ question, runKey }: { question: string; runKey:
             <ol className="web-search-list">
               {result.results.map((item) => (
                 <li key={item.url}>
-                  <a href={item.url} target="_blank" rel="noreferrer">{item.title}</a>
+                  <a href={item.url} target="_blank" rel="noreferrer">
+                    {item.title}<ArrowSquareOut aria-label="opens in a new tab" />
+                  </a>
                   <span className="chip-row">
                     <span className="chip">{item.domain}</span>
-                    <span className={`badge ${item.official ? "badge-citaat_gecontroleerd" : "badge-warning"}`}>
+                    <span className={`badge ${item.official ? "badge-web-government" : "badge-web-other"}`}>
                       {item.official ? "Government website" : "Non-government website"}
                     </span>
                   </span>
@@ -83,7 +96,12 @@ export function WebSearchPanel({ question, runKey }: { question: string; runKey:
           ) : (
             <p className="muted">No pages cited.</p>
           )}
-          <p className="muted">Searched on {new Date(result.searched_at).toLocaleString("en-GB")} · {result.model}</p>
+          <div className="web-search-footer">
+            <p className="muted">Searched {new Date(result.searched_at).toLocaleString("en-GB")} using {result.model}</p>
+            <Link className="button button-small button-secondary" href="/bronnen#add-source">
+              <UploadSimple aria-hidden="true" /> Add verified source
+            </Link>
+          </div>
         </div>
       ) : null}
     </section>

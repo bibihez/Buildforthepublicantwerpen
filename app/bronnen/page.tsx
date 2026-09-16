@@ -147,7 +147,7 @@ export default function SourcesPage() {
           )}
         </section>
 
-        <section aria-label="Add a new source">
+        <section id="add-source" className="scroll-mt-24" aria-label="Add a new source">
           <SourceForm disabled={loading || Boolean(loadError)} onUpload={uploadSource} sources={sortedSources} />
         </section>
       </div>

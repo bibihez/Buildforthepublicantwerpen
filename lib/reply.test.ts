@@ -39,7 +39,18 @@ describe('buildReply', () => {
 
     const no = response();
     no.answer.casus.facts[0].answer = 'nee';
+    no.answer.casus.facts[0].set_by = 'officer';
     expect(buildReply(no)).not.toContain('FAVV certificates');
+  });
+
+  it('treats an unconfirmed AI selection as unknown', () => {
+    const suggestedNo = response();
+    suggestedNo.answer.casus.facts[0].answer = 'nee';
+    suggestedNo.answer.casus.facts[0].set_by = 'ai';
+
+    expect(buildReply(suggestedNo)).toContain(
+      'If the answer to “Does the applicant sell food?” is yes: Attach the applicable FAVV certificates',
+    );
   });
 
   it('does not repeat a condition already stated in the finding', () => {
@@ -59,7 +70,7 @@ describe('buildReply', () => {
 
     const reply = buildReply(result);
     expect(reply).toContain(
-      'If the following condition applies — “je een zelfstandige uitbater bent”: Attach the applicable FAVV certificates',
+      'If this source condition applies (“je een zelfstandige uitbater bent”): Attach the applicable FAVV certificates',
     );
     expect(reply).not.toContain('If Als');
   });
@@ -67,6 +78,7 @@ describe('buildReply', () => {
   it('retains the source condition when the fact is yes', () => {
     const yes = response();
     yes.answer.casus.facts[0].answer = 'ja';
+    yes.answer.casus.facts[0].set_by = 'officer';
 
     expect(buildReply(yes)).toContain(
       'Condition: enkel van toepassing bij verkoop van voeding.',

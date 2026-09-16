@@ -29,7 +29,7 @@ const statusLabels: Record<SourceListItem["status"], string> = {
 };
 
 function formatDate(value?: string | null) {
-  if (!value) return "—";
+  if (!value) return "Not provided";
   const date = new Date(`${value}T00:00:00`);
   return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date);
 }
@@ -104,7 +104,7 @@ export function SourceList({ sources, pendingId, onDeactivate }: SourceListProps
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold" scope="col">Source</th>
-              <th className="px-4 py-3 font-semibold" scope="col">Level · type</th>
+              <th className="px-4 py-3 font-semibold" scope="col">Level and type</th>
               <th className="px-4 py-3 font-semibold" scope="col">Jurisdiction</th>
               <th className="px-4 py-3 font-semibold" scope="col">Dates</th>
               <th className="px-4 py-3 font-semibold" scope="col">Status</th>
@@ -245,7 +245,7 @@ export function SourceList({ sources, pendingId, onDeactivate }: SourceListProps
                     <td className="px-4 py-4" colSpan={8}>
                       <div className="rounded-xl border border-slate-200 bg-white p-4">
                         <div className="mb-3 flex items-center justify-between gap-4">
-                          <p className="font-semibold text-slate-900">Source history — {source.short_title}</p>
+                          <p className="font-semibold text-slate-900">Source history: {source.short_title}</p>
                           <button
                             className="rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                             onClick={() => setExpandedId(null)}
