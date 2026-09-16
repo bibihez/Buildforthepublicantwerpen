@@ -21,6 +21,7 @@ import {
 import { ApproveBar } from "./ApproveBar";
 import { CaseCard } from "./CaseCard";
 import { EvidencePanel } from "./EvidencePanel";
+import { WebSearchPanel } from "@/components/WebSearchPanel";
 import { FallbackPassages } from "./FallbackPassages";
 import { FindingList } from "./FindingList";
 import type { FindingReviewUpdate } from "./ReviewActions";
@@ -337,6 +338,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           </button>
         </div>
       </section>
+
+      <WebSearchPanel question={question} />
 
       {data && draftCasus ? (
         <>
