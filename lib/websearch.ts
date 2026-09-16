@@ -18,7 +18,7 @@ export const OFFICIAL_DOMAINS = [
 
 const INSTRUCTIONS = `You help a local economy officer in Schoten (Province of Antwerp, Flanders, Belgium).
 Search the web for OFFICIAL documents (regulations, fee rules, government guidance) that answer the entrepreneur's question.
-Write 2-4 short Dutch sentences: which documents you found, who published them, and their date or version if visible.
+Write 2-4 short English sentences (keep official Dutch document titles as they are): which documents you found, who published them, and their date or version if visible.
 Do not answer the question yourself and do not give advice. Always cite the pages you used.`;
 
 let client: OpenAI | null = null;
@@ -79,14 +79,14 @@ export async function webSearch(question: string, { allDomains = false } = {}): 
 /** Looks online for a newer official version of a source. A lead only: replacing a source is an officer upload. */
 export async function checkForNewVersion(source: Pick<Source, 'title' | 'issuer' | 'adopted_on' | 'effective_from' | 'published_on'>): Promise<WebSearchResponse> {
   const known = [
-    source.adopted_on && `aangenomen ${source.adopted_on}`,
-    source.effective_from && `van kracht vanaf ${source.effective_from}`,
-    source.published_on && `gepubliceerd ${source.published_on}`,
+    source.adopted_on && `adopted ${source.adopted_on}`,
+    source.effective_from && `in force from ${source.effective_from}`,
+    source.published_on && `published ${source.published_on}`,
   ]
     .filter(Boolean)
     .join(', ');
   return webSearch(
-    `Bestaat er een nieuwere officiële versie van "${source.title}" van ${source.issuer}${known ? ` (onze versie: ${known})` : ''}? ` +
-      'Noem de meest recente versie die je vindt, met datum. Zeg duidelijk als je geen nieuwere versie vindt.',
+    `Is there a newer official version of "${source.title}" by ${source.issuer}${known ? ` (our version: ${known})` : ''}? ` +
+      'Name the most recent version you find, with its date. Say clearly if you find no newer version.',
   );
 }

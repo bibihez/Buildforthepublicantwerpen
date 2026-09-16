@@ -15,10 +15,10 @@ export function VersionCheck({ sourceId }: { sourceId: string }) {
     try {
       const response = await fetch(`/api/sources/${encodeURIComponent(sourceId)}/check-update`, { method: "POST" });
       const body = (await response.json()) as WebSearchResponse | ApiError;
-      if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Controle mislukt");
+      if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Check failed");
       setResult(body);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Controle mislukt");
+      setError(caught instanceof Error ? caught.message : "Check failed");
     } finally {
       setLoading(false);
     }
@@ -28,8 +28,8 @@ export function VersionCheck({ sourceId }: { sourceId: string }) {
     <div className="mt-4 border-t border-slate-200 pt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">Nieuwere versie online?</p>
-          <p className="text-xs text-slate-600">Webresultaat — niet geverifieerd. Een nieuwe versie telt pas mee na opladen met &quot;Vervangt&quot;.</p>
+          <p className="font-semibold text-slate-900">Newer version online?</p>
+          <p className="text-xs text-slate-600">Web result — not verified. A newer version only counts once an officer uploads it with &quot;Replaces&quot;.</p>
         </div>
         <button
           className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
@@ -37,7 +37,7 @@ export function VersionCheck({ sourceId }: { sourceId: string }) {
           onClick={check}
           type="button"
         >
-          {loading ? "Zoeken…" : "Zoek nieuwere versie"}
+          {loading ? "Searching…" : "Search for a newer version"}
         </button>
       </div>
       {error ? <p className="mt-2 text-xs font-medium text-red-700" role="alert">{error}</p> : null}
@@ -49,7 +49,7 @@ export function VersionCheck({ sourceId }: { sourceId: string }) {
               {result.results.map((item) => (
                 <li key={item.url}>
                   <a className="font-semibold text-teal-800 underline" href={item.url} rel="noreferrer" target="_blank">{item.title}</a>{" "}
-                  <span className="text-xs text-slate-600">({item.domain}{item.official ? ", overheidssite" : ""})</span>
+                  <span className="text-xs text-slate-600">({item.domain}{item.official ? ", government site" : ""})</span>
                 </li>
               ))}
             </ul>
