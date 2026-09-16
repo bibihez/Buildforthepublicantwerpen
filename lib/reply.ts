@@ -46,7 +46,7 @@ function cleanCondition(quote: string): string {
     condition = condition.slice(1, -1).trim();
   }
   return condition
-    .replace(/^(?:indien|als)\s+/i, '')
+    .replace(/^(?:if|when|indien|als)\s+/i, '')
     .replace(/[.:;]+$/, '')
     .trim();
 }
@@ -62,7 +62,7 @@ function conditionAlreadyStated(text: string, condition: string): boolean {
   const normalizedStatement = normalizedText(text);
   const variants = [
     condition,
-    condition.replace(/^(?:enkel|alleen)\s+van\s+toepassing\s+/i, ''),
+    condition.replace(/^(?:(?:enkel|alleen)\s+van\s+toepassing|only\s+applies)\s+/i, ''),
   ]
     .map(normalizedText)
     .filter((variant) => variant.length >= 8);
@@ -74,18 +74,9 @@ function factCondition(answer: Answer, finding: Finding): string | null {
   const fact = answer.casus.facts.find((candidate) => candidate.id === finding.condition?.fact_id);
   if (!fact) return null;
 
-  const question = fact.question.trim().replace(/[?!.:;]+$/, '').trim();
-  const [verb, ...remainder] = question.split(/\s+/);
-  if (!verb || remainder.length === 0) return null;
-
-  const subject = remainder.join(' ');
-  return `${subject.charAt(0).toLocaleLowerCase('nl-BE')}${subject.slice(1)} ${verb.toLocaleLowerCase('nl-BE')}`;
-}
-
-function cleanSubquestion(subquestion: string): string {
-  const cleaned = subquestion.trim().replace(/[?!.:;]+$/, '').trim();
-  if (!cleaned) return '';
-  return `${cleaned.charAt(0).toLocaleLowerCase('nl-BE')}${cleaned.slice(1)}`;
+  const question = fact.question.trim();
+  if (!question) return null;
+  return `the answer to “${question}” is yes`;
 }
 
 function conditionState(answer: Answer, finding: Finding): 'ja' | 'nee' | 'onbekend' {
@@ -101,7 +92,7 @@ function chosenFindingText(finding: Finding): ReplyParagraph | null {
 
     if (finding.conflict_decision === 'onzeker_vermelden') {
       return {
-        text: 'Hierover bestaan verschillende bronnen; dit wordt nog nagekeken.',
+        text: 'The available sources conflict on this point; this still needs to be checked.',
         passageIds: [
           ...finding.citations.map((citation) => citation.passage_id),
           ...(finding.conflict_with ? [finding.conflict_with.passage_id] : []),
@@ -145,15 +136,17 @@ function withCondition(answer: Answer, finding: Finding, paragraph: ReplyParagra
   if (state === 'onbekend') {
     if (conditionAlreadyStated(paragraph.text, condition)) return paragraph;
     const readableCondition = /^(?:enkel|alleen)\s+van\s+toepassing\b/i.test(condition)
-      ? factCondition(answer, finding) ?? condition
-      : condition;
+      ? factCondition(answer, finding)
+      : null;
     return {
       ...paragraph,
-      text: `Indien ${readableCondition}: ${paragraph.text}`,
+      text: readableCondition
+        ? `If ${readableCondition}: ${paragraph.text}`
+        : `If the following condition applies — “${condition}”: ${paragraph.text}`,
     };
   }
 
-  return { ...paragraph, text: `${paragraph.text} Voorwaarde: ${sentence(condition)}` };
+  return { ...paragraph, text: `${paragraph.text} Condition: ${sentence(condition)}` };
 }
 
 function pageLabel(passage: Passage): string {
@@ -183,10 +176,10 @@ export function buildReply(input: AnswerResponse | Answer): string {
 
   for (const missing of answer.not_found) {
     if (missing.decision === 'vermelden') {
-      const subquestion = cleanSubquestion(missing.subquestion);
+      const subquestion = missing.subquestion.trim();
       if (!subquestion) continue;
       paragraphs.push({
-        text: `Over ${subquestion} vonden we in onze bronnen geen informatie.`,
+        text: `No information was found in the available sources for the question: “${subquestion}”`,
         passageIds: [],
       });
     }
@@ -210,13 +203,13 @@ export function buildReply(input: AnswerResponse | Answer): string {
     .sort((left, right) => left[1] - right[1])
     .map(([passageId, number]) => {
       const passage = passages[passageId];
-      if (!passage) return `[${number}] Bronpassage ${passageId}`;
+      if (!passage) return `[${number}] Source passage ${passageId}`;
 
       const source = sources[passage.source_id];
-      const title = source?.short_title ?? `Bron ${passage.source_id}`;
+      const title = source?.short_title ?? `Source ${passage.source_id}`;
       const article = passage.article?.trim();
       return `[${number}] ${title}${article ? `, ${article}` : ''}, ${pageLabel(passage)}`;
     });
 
-  return [...numberedParagraphs, `Bronnen:\n${footnotes.join('\n')}`].join('\n\n');
+  return [...numberedParagraphs, `Sources:\n${footnotes.join('\n')}`].join('\n\n');
 }

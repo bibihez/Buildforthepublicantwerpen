@@ -1,7 +1,7 @@
 import { tokenize } from './search';
 import type { Answer, PrecedentInfo, Source } from './types';
 
-export const NO_CHANGES = 'Geen wijzigingen gedetecteerd in de gecontroleerde bronnen';
+export const NO_CHANGES = 'No changes detected in the checked sources';
 
 /** Share of the shorter question's words found in the other. 1 = same words. */
 export function similarity(a: string, b: string): number {
@@ -47,25 +47,25 @@ export function compare(precedent: Answer, current: Answer, currentSources: Sour
   const differences: string[] = [];
 
   for (const id of citedSourceIds(current.findings, currentPassageSource)) {
-    if (!then.has(id)) differences.push(`Nieuwe bron sinds vorig antwoord: ${now.get(id)?.short_title ?? id}`);
+    if (!then.has(id)) differences.push(`New source since the previous answer: ${now.get(id)?.short_title ?? id}`);
   }
 
   for (const id of citedSourceIds(snap.findings, (p) => snapPassageSource.get(p))) {
     const old = then.get(id);
     const cur = now.get(id);
     const title = old?.short_title ?? id;
-    if (!cur) differences.push(`Bron gewijzigd sinds vorig antwoord: ${title} (niet meer beschikbaar)`);
-    else if (!cur.active) differences.push(`Bron gewijzigd sinds vorig antwoord: ${title} (gedeactiveerd)`);
+    if (!cur) differences.push(`Source changed since the previous answer: ${title} (no longer available)`);
+    else if (!cur.active) differences.push(`Source changed since the previous answer: ${title} (deactivated)`);
     else if (cur.superseded_by && !old?.superseded_by) {
-      differences.push(`Bron gewijzigd sinds vorig antwoord: ${title} (vervangen door ${now.get(cur.superseded_by)?.short_title ?? cur.superseded_by})`);
+      differences.push(`Source changed since the previous answer: ${title} (superseded by ${now.get(cur.superseded_by)?.short_title ?? cur.superseded_by})`);
     } else if (old?.sha256 && cur.sha256 && old.sha256 !== cur.sha256) {
-      differences.push(`Bron gewijzigd sinds vorig antwoord: ${title} (andere versie van het bestand)`);
+      differences.push(`Source changed since the previous answer: ${title} (different file version)`);
     }
   }
 
   for (const f of current.casus.facts) {
     const old = snap.casus.facts.find((o) => o.id === f.id);
-    if (old && old.answer !== f.answer) differences.push(`Casus verschilt: ${f.question} (toen: ${old.answer} · nu: ${f.answer})`);
+    if (old && old.answer !== f.answer) differences.push(`Case differs: ${f.question} (then: ${old.answer} · now: ${f.answer})`);
   }
 
   return {

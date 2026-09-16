@@ -30,28 +30,28 @@ export function parseUploadFields(form: FormData): SourceUploadFields {
   };
   const required = (k: string, label: string) => {
     const v = str(k);
-    if (!v) throw new RequestError(`Veld ontbreekt: ${label}`, 400);
+    if (!v) throw new RequestError(`Missing field: ${label}`, 400);
     return v;
   };
   const date = (k: string) => {
     const v = str(k);
-    if (v && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(v)) throw new RequestError(`Ongeldige datum voor ${k}: gebruik JJJJ-MM-DD`, 400);
+    if (v && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(v)) throw new RequestError(`Invalid date for ${k}: use YYYY-MM-DD`, 400);
     return v;
   };
-  const level = required('level', 'niveau') as Level;
-  const nature = required('nature', 'aard') as Nature;
+  const level = required('level', 'level') as Level;
+  const nature = required('nature', 'nature') as Nature;
   const status = required('status', 'status') as Source['status'];
-  if (!LEVELS.includes(level)) throw new RequestError('Ongeldig niveau', 400);
-  if (!NATURES.includes(nature)) throw new RequestError('Ongeldige aard', 400);
-  if (!STATUSES.includes(status)) throw new RequestError('Ongeldige status', 400);
+  if (!LEVELS.includes(level)) throw new RequestError('Invalid level', 400);
+  if (!NATURES.includes(nature)) throw new RequestError('Invalid nature', 400);
+  if (!STATUSES.includes(status)) throw new RequestError('Invalid status', 400);
 
   return {
-    title: required('title', 'titel'),
-    short_title: required('short_title', 'korte titel'),
+    title: required('title', 'title'),
+    short_title: required('short_title', 'short title'),
     level,
-    issuer: required('issuer', 'uitgever'),
+    issuer: required('issuer', 'issuer'),
     nature,
-    territory: required('territory', 'grondgebied'),
+    territory: required('territory', 'territory'),
     status,
     adopted_on: date('adopted_on'),
     // Guidance has no validity dates; legislation without them is kept and checked as "onzeker".
@@ -60,22 +60,22 @@ export function parseUploadFields(form: FormData): SourceUploadFields {
     published_on: date('published_on'),
     origin_url: str('origin_url'),
     notes: str('notes'),
-    added_by: required('added_by', 'toegevoegd door'),
+    added_by: required('added_by', 'added by'),
     supersedes_id: str('supersedes_id'),
   };
 }
 
 export async function addSource(fields: SourceUploadFields, fileName: string, data: Uint8Array): Promise<{ source: Source; passages: number }> {
-  if (!fileName.toLowerCase().endsWith('.pdf')) throw new RequestError('Alleen PDF-bestanden', 400);
+  if (!fileName.toLowerCase().endsWith('.pdf')) throw new RequestError('PDF files only', 400);
   const sha = sha256(data);
   const dup = findSourceBySha(sha);
-  if (dup) throw new RequestError(`Deze versie bestaat al: ${dup.short_title}`, 409);
+  if (dup) throw new RequestError(`This version already exists: ${dup.short_title}`, 409);
 
   const old = fields.supersedes_id ? getSource(fields.supersedes_id) : null;
-  if (fields.supersedes_id && !old) throw new RequestError('De bron die vervangen wordt, bestaat niet', 400);
+  if (fields.supersedes_id && !old) throw new RequestError('The source being superseded does not exist', 400);
 
   const { passages } = await ingestPdf(data, 'pending');
-  if (passages.length === 0) throw new RequestError('Geen tekst gevonden in de PDF (gescand document?)', 400);
+  if (passages.length === 0) throw new RequestError('No text found in the PDF (is it a scanned document?)', 400);
 
   let id = slug(fields.short_title);
   if (getSource(id)) id = `${id}-${sha.slice(0, 6)}`;
@@ -93,7 +93,7 @@ export async function addSource(fields: SourceUploadFields, fileName: string, da
 
   if (old) {
     upsertSource({ ...old, superseded_by: id });
-    addSourceEvent({ id: randomUUID(), source_id: old.id, at: now, by: fields.added_by, type: 'vervangen', reason: `Vervangen door ${source.short_title}` });
+    addSourceEvent({ id: randomUUID(), source_id: old.id, at: now, by: fields.added_by, type: 'vervangen', reason: `Superseded by ${source.short_title}` });
   }
   invalidateIndex();
   return { source, passages: passages.length };
@@ -101,9 +101,9 @@ export async function addSource(fields: SourceUploadFields, fileName: string, da
 
 export function setActive(id: string, active: boolean, reason: string, by: string): Source {
   const source = getSource(id);
-  if (!source) throw new RequestError('Bron niet gevonden', 404);
-  if (!reason?.trim()) throw new RequestError('Geef een reden op', 400);
-  if (!by?.trim()) throw new RequestError('Naam van de medewerker ontbreekt', 400);
+  if (!source) throw new RequestError('Source not found', 404);
+  if (!reason?.trim()) throw new RequestError('Provide a reason', 400);
+  if (!by?.trim()) throw new RequestError('Officer name is missing', 400);
   const next = { ...source, active };
   upsertSource(next);
   addSourceEvent({

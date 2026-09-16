@@ -16,21 +16,21 @@ export function getApproveBlockers(
   if (expectedRevision !== undefined && expectedRevision !== answer.revision) {
     blockers.push({
       code: 'revision_mismatch',
-      message: 'Deze versie is intussen gewijzigd. Laad het antwoord opnieuw voor je goedkeurt.',
+      message: 'This version has changed. Reload the answer before approving it.',
     });
   }
 
   if (answer.status === 'goedgekeurd') {
     blockers.push({
       code: 'already_approved',
-      message: 'Deze versie is al goedgekeurd. Maak een nieuwe versie om wijzigingen aan te brengen.',
+      message: 'This version has already been approved. Create a new version to make changes.',
     });
   }
 
   if (answer.reply_stale) {
     blockers.push({
       code: 'reply_stale',
-      message: 'De antwoordtekst is niet meer actueel. Bouw de tekst opnieuw op of sla de aangepaste tekst op.',
+      message: 'The reply is out of date. Rebuild it or save the revised text before approval.',
     });
   }
 
@@ -38,7 +38,7 @@ export function getApproveBlockers(
     if (finding.review === 'open') {
       blockers.push({
         code: 'finding_open',
-        message: `Beoordeel eerst de bevinding over “${finding.subquestion}”.`,
+        message: `Review the finding about “${finding.subquestion}”.`,
         ref: finding.id,
       });
     }
@@ -47,7 +47,7 @@ export function getApproveBlockers(
     if (isConflict && !finding.conflict_decision) {
       blockers.push({
         code: 'conflict_undecided',
-        message: `Kies hoe de tegenstrijdige passages over “${finding.subquestion}” worden behandeld.`,
+        message: `Choose how to handle the conflicting passages about “${finding.subquestion}”.`,
         ref: finding.id,
       });
     }
@@ -57,7 +57,7 @@ export function getApproveBlockers(
     if (!missing.decision) {
       blockers.push({
         code: 'not_found_undecided',
-        message: `Kies of het ontbrekende antwoord over “${missing.subquestion}” wordt vermeld.`,
+        message: `Choose whether to mention the missing answer about “${missing.subquestion}”.`,
         ref: missing.subquestion,
       });
     }

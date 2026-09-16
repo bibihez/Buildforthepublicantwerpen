@@ -47,9 +47,9 @@ describe('precedent', () => {
     const info = compare(approved(), cur, [src('markt', { sha256: 'b' }), src('retributie', { short_title: 'Retributiereglement markten 2026–2031' })], sourceOf);
     expect(info).toMatchObject({ answer_id: 'old', approved_by: 'Marleen' });
     expect(info.differences).toEqual([
-      'Nieuwe bron sinds vorig antwoord: Retributiereglement markten 2026–2031',
-      'Bron gewijzigd sinds vorig antwoord: MARKT (andere versie van het bestand)',
-      'Casus verschilt: Voeding? (toen: nee · nu: onbekend)',
+      'New source since the previous answer: Retributiereglement markten 2026–2031',
+      'Source changed since the previous answer: MARKT (different file version)',
+      'Case differs: Voeding? (then: nee · now: onbekend)',
     ]);
   });
 });

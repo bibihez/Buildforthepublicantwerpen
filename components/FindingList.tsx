@@ -36,22 +36,22 @@ export function FindingList({
     <section className="panel findings-panel" aria-labelledby="findings-heading">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Beoordeling</p>
-          <h2 id="findings-heading">Bevindingen</h2>
+          <p className="eyebrow">Review</p>
+          <h2 id="findings-heading">Findings</h2>
         </div>
         <span className="count">{answer.findings.length + answer.not_found.length}</span>
       </div>
 
       {bulkCount > 0 ? (
         <button type="button" className="button button-secondary full bulk-button" onClick={onBulkConfirm} disabled={disabled}>
-          Bevestig alle gecontroleerde citaten ({bulkCount})
+          Confirm all verified quotes ({bulkCount})
         </button>
       ) : null}
 
       {answer.findings.length === 0 && answer.not_found.length === 0 ? (
         <div className="empty-state">
-          <h3>Geen bevindingen opgesteld</h3>
-          <p>Controleer de gevonden passages en probeer de analyse opnieuw.</p>
+          <h3>No findings prepared</h3>
+          <p>Review the retrieved passages and try the analysis again.</p>
         </div>
       ) : null}
 
@@ -72,9 +72,9 @@ export function FindingList({
               <p className="finding-statement">{finding.corrected_statement || finding.statement}</p>
               {finding.condition ? (
                 <div className="condition-box">
-                  <strong>Voorwaarde:</strong> {finding.condition.quote}
+                  <strong>Condition:</strong> {finding.condition.quote}
                   <span className="condition-state">
-                    {factState === "nee" ? "Niet van toepassing volgens casus" : factState === "ja" ? "Van toepassing volgens casus" : "Voorwaardelijk"}
+                    {factState === "nee" ? "Not applicable to this case" : factState === "ja" ? "Applicable to this case" : "Conditional"}
                   </span>
                 </div>
               ) : null}
@@ -90,7 +90,7 @@ export function FindingList({
               <p className="subquestion">{missing.subquestion}</p>
               <NotFoundBadge />
             </div>
-            <p>Geen bewijs gevonden in de beschikbare officiële bronnen. Dit betekent niet dat er geen regel bestaat.</p>
+            <p>No evidence was found in the available official sources. This does not mean that no rule exists.</p>
             <div className="segmented decision-toggle">
               <button
                 type="button"
@@ -98,7 +98,7 @@ export function FindingList({
                 onClick={() => onNotFoundDecision(missing.subquestion, "vermelden")}
                 disabled={disabled}
               >
-                Vermelden in antwoord
+                Mention in reply
               </button>
               <button
                 type="button"
@@ -106,7 +106,7 @@ export function FindingList({
                 onClick={() => onNotFoundDecision(missing.subquestion, "weglaten")}
                 disabled={disabled}
               >
-                Weglaten
+                Omit
               </button>
             </div>
           </article>

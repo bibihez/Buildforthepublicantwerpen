@@ -30,7 +30,7 @@ import { NotUsedList } from "./NotUsedList";
 import { ReplyEditor } from "./ReplyEditor";
 
 const DEFAULT_QUESTION = "Ik wil een vaste standplaats op de markt in Schoten. Hoe dien ik een aanvraag in?";
-const loadingMessages = ["Bronnen controleren…", "Passages zoeken…", "Bevindingen opstellen…"];
+const loadingMessages = ["Checking sources…", "Searching passages…", "Preparing findings…"];
 
 function cloneFixture(): AnswerResponse {
   return JSON.parse(JSON.stringify(fixtureAnswerResponse)) as AnswerResponse;
@@ -107,7 +107,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       if (caught.details?.blockers) setServerBlockers(caught.details.blockers);
       return;
     }
-    setError(caught instanceof Error ? caught.message : "Er is een onverwachte fout opgetreden.");
+    setError(caught instanceof Error ? caught.message : "An unexpected error occurred.");
   };
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       .then((response) => {
         if (cancelled) return;
         acceptResponse(response, true);
-        setNotice("Nieuwe conceptversie geopend vanuit de historiek.");
+        setNotice("New draft version opened from history.");
       })
       .catch((caught: unknown) => {
         if (!cancelled) showError(caught);
@@ -205,7 +205,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
 
   const bulkConfirm = () => {
     if (!data) return;
-    const reviewedBy = reviewer.trim() || "Medewerker lokale economie";
+    const reviewedBy = reviewer.trim() || "Local economy officer";
     const finding_reviews = data.answer.findings
       .filter((finding) => finding.status === "citaat_gecontroleerd" && finding.review === "open")
       .map((finding) => ({
@@ -224,9 +224,9 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
   const regenerateReply = () => {
     if (!data) return;
     const regenerated = buildReply(data);
-    if (replyText.trim() && replyText !== data.answer.reply_text && !window.confirm("Dit overschrijft uw niet-opgeslagen handmatige wijzigingen. Doorgaan?")) return;
+    if (replyText.trim() && replyText !== data.answer.reply_text && !window.confirm("This will overwrite your unsaved manual changes. Continue?")) return;
     setReplyText(regenerated);
-    setNotice("Antwoord opnieuw opgebouwd. Sla deze versie op om ze goedkeuringsklaar te maken.");
+    setNotice("Reply rebuilt. Save this version to make it ready for approval.");
   };
 
   const approve = async () => {
@@ -264,7 +264,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           approved_by: reviewer.trim(),
         }));
       }
-      setNotice("Deze antwoordversie is goedgekeurd en als onveranderlijke momentopname bewaard.");
+      setNotice("This answer version was approved and saved as an immutable snapshot.");
     } catch (caught) {
       showError(caught);
     } finally {
@@ -296,7 +296,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     setDraftCasus(null);
     setSelectedId(null);
     setReplyText("");
-    setNotice("Live API-modus actief.");
+    setNotice("Live API mode active.");
     setError(null);
     setFallback(undefined);
   };
@@ -305,37 +305,37 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
     <main className="workspace">
       <section className="intro-row">
         <div>
-          <p className="eyebrow">Onderbouwd antwoorden</p>
-          <h1>Maak een controleerbaar antwoord</h1>
-          <p>Analyseer de vraag, controleer elk citaat en keur één specifieke antwoordversie goed.</p>
+          <p className="eyebrow">Evidence-based answers</p>
+          <h1>Create a verifiable answer</h1>
+          <p>Analyse the question, verify every quote and approve one specific answer version.</p>
         </div>
         {process.env.NODE_ENV !== "production" ? (
           <button type="button" className="button button-quiet" onClick={fixtureMode ? leaveFixture : openFixture}>
-            {fixtureMode ? "Naar live API" : "Open ontwikkelfixture"}
+            {fixtureMode ? "Use live API" : "Open development fixture"}
           </button>
         ) : null}
       </section>
 
       <div className="scope-banner">
-        <strong>Beperkte bronnenset: {data ? Object.keys(data.sources).length : "beschikbare"} documenten.</strong>
-        <span> Niet gevonden betekent: geen bewijs in deze bronnen — niet dat er geen regel bestaat.</span>
+        <strong>Limited source set: {data ? Object.keys(data.sources).length : "available"} documents.</strong>
+        <span> Not found means no evidence in these sources—not that no rule exists.</span>
       </div>
-      {fixtureMode ? <div className="fixture-banner"><strong>Ontwikkelmodus.</strong> {FIXTURE_DEVELOPMENT_NOTICE}</div> : null}
+      {fixtureMode ? <div className="fixture-banner"><strong>Development mode.</strong> {FIXTURE_DEVELOPMENT_NOTICE}</div> : null}
       {notice ? <div className="success-banner" role="status">{notice}</div> : null}
       {error ? (
         <div className="error-banner" role="alert">
-          <strong>Actie mislukt.</strong> {error}
-          {!fixtureMode && process.env.NODE_ENV !== "production" ? <span> De ontwikkelfixture kan alleen handmatig worden geopend.</span> : null}
+          <strong>Action failed.</strong> {error}
+          {!fixtureMode && process.env.NODE_ENV !== "production" ? <span> The development fixture can only be opened manually.</span> : null}
         </div>
       ) : null}
       {fallback ? <FallbackPassages fallback={fallback} /> : null}
 
       <section className="question-panel panel">
-        <label htmlFor="question">Vraag van de ondernemer</label>
+        <label htmlFor="question">Entrepreneur&apos;s question</label>
         <div className="question-row">
           <textarea id="question" rows={3} value={question} onChange={(event) => setQuestion(event.target.value)} disabled={loading} />
           <button type="button" className="button button-primary analyse-button" onClick={analyse} disabled={loading || !question.trim()}>
-            {loading ? loadingMessages[loadingStep] : "Analyseer"}
+            {loading ? loadingMessages[loadingStep] : "Analyse"}
           </button>
         </div>
       </section>
@@ -344,8 +344,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
         <>
           {data.answer.precedent ? (
             <section className="precedent-banner">
-              <strong>Vergelijkbare vraag eerder goedgekeurd door {data.answer.precedent.approved_by}</strong>
-              <span> op {new Date(data.answer.precedent.approved_at).toLocaleDateString("nl-BE")}</span>
+              <strong>Similar question previously approved by {data.answer.precedent.approved_by}</strong>
+              <span> on {new Date(data.answer.precedent.approved_at).toLocaleDateString("en-GB")}</span>
               <ul>{data.answer.precedent.differences.map((difference) => <li key={difference}>{difference}</li>)}</ul>
             </section>
           ) : null}
@@ -397,8 +397,8 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
       ) : (
         <section className="empty-workspace">
           <span className="empty-icon" aria-hidden="true">§</span>
-          <h2>Start met de vraag van de ondernemer</h2>
-          <p>Bronwijzer toont alleen bevindingen die naar officiële bronpassages verwijzen.</p>
+          <h2>Start with the entrepreneur&apos;s question</h2>
+          <p>Bronwijzer only shows findings that refer to official source passages.</p>
         </section>
       )}
     </main>

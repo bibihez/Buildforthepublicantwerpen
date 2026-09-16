@@ -23,6 +23,57 @@ type UploadState =
   | { kind: "success"; message: string }
   | { kind: "error"; message: string };
 
+function uploadErrorMessage(error: unknown) {
+  if (!(error instanceof Error)) return "The source could not be added.";
+
+  const exactTranslations: Record<string, string> = {
+    "Expected a form containing a file": "A form containing a file is required.",
+    "No file selected": "No file was selected.",
+    "Invalid level": "The selected level is invalid.",
+    "Invalid nature": "The selected source type is invalid.",
+    "Invalid status": "The selected status is invalid.",
+    "PDF files only": "Only PDF files are supported.",
+    "The source being superseded does not exist": "The source to be superseded does not exist.",
+    "No text found in the PDF (is it a scanned document?)":
+      "No text was found in the PDF. It may be a scanned document.",
+    "Something went wrong on the server": "The server encountered an error while adding the source.",
+    "Verwacht een formulier met een bestand": "A form containing a file is required.",
+    "Geen bestand gekozen": "No file was selected.",
+    "Ongeldig niveau": "The selected level is invalid.",
+    "Ongeldige aard": "The selected source type is invalid.",
+    "Ongeldige status": "The selected status is invalid.",
+    "Alleen PDF-bestanden": "Only PDF files are supported.",
+    "De bron die vervangen wordt, bestaat niet": "The source to be superseded does not exist.",
+    "Geen tekst gevonden in de PDF (gescand document?)":
+      "No text was found in the PDF. It may be a scanned document.",
+    "Er ging iets mis op de server": "The server encountered an error while adding the source.",
+  };
+  if (exactTranslations[error.message]) return exactTranslations[error.message];
+
+  if (error.message.startsWith("Deze versie bestaat al:")) {
+    return error.message.replace("Deze versie bestaat al:", "This version already exists:");
+  }
+  if (error.message.startsWith("This version already exists:")) return error.message;
+  if (error.message.startsWith("Veld ontbreekt:")) {
+    return "A required field is missing. Check the source details and try again.";
+  }
+  if (error.message.startsWith("Missing field:")) {
+    return "A required field is missing. Check the source details and try again.";
+  }
+  if (error.message.startsWith("Ongeldige datum voor")) {
+    return "One of the dates is invalid. Use YYYY-MM-DD.";
+  }
+  if (error.message.startsWith("Invalid date for")) {
+    return "One of the dates is invalid. Use YYYY-MM-DD.";
+  }
+  if (error.message.startsWith("De aanvraag is mislukt")) {
+    return "The request failed. Please try again.";
+  }
+  if (error.message.startsWith("The request failed")) return "The request failed. Please try again.";
+
+  return "The source could not be added. Please try again.";
+}
+
 export function SourceForm({ sources, disabled = false, onUpload }: SourceFormProps) {
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
@@ -52,11 +103,11 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
     const formData = new FormData(event.currentTarget);
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
-      setState({ kind: "error", message: "Kies een pdf-bestand om toe te voegen." });
+      setState({ kind: "error", message: "Select a PDF file to upload." });
       return;
     }
     if (file.type !== "application/pdf" && !file.name.toLocaleLowerCase("nl-BE").endsWith(".pdf")) {
-      setState({ kind: "error", message: "Alleen een pdf-bestand kan als officiële bron worden toegevoegd." });
+      setState({ kind: "error", message: "Only a PDF file can be added as an official source." });
       return;
     }
 
@@ -88,12 +139,12 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
       setEffectiveFromUnknown(false);
       setState({
         kind: "success",
-        message: `Bron toegevoegd — ${result.passages} ${result.passages === 1 ? "passage" : "passages"}.`,
+        message: `Source added — ${result.passages} ${result.passages === 1 ? "passage" : "passages"}.`,
       });
     } catch (error) {
       setState({
         kind: "error",
-        message: error instanceof Error ? error.message : "De bron kon niet worden toegevoegd.",
+        message: uploadErrorMessage(error),
       });
     }
   }
@@ -110,18 +161,18 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
       ref={formRef}
     >
       <div className="mb-6">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">Nieuwe officiële bron</p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">Pdf toevoegen</h2>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">New official source</p>
+        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">Add PDF</h2>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-          Voeg alleen een officiële publicatie toe. De broncontrole beoordeelt metadata en geldigheid, niet de
-          juridische interpretatie van de inhoud.
+          Add official publications only. Source checks assess metadata and validity, not the legal interpretation
+          of the content.
         </p>
       </div>
 
       <fieldset disabled={isSubmitting} className="grid gap-5">
         <div>
           <label className={labelClass} htmlFor={`${formId}-file`}>
-            Pdf-bestand <span aria-hidden="true">*</span>
+            PDF file <span aria-hidden="true">*</span>
           </label>
           <input
             accept="application/pdf,.pdf"
@@ -136,19 +187,19 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
         <div className="grid gap-5 md:grid-cols-2">
           <div>
             <label className={labelClass} htmlFor={`${formId}-title`}>
-              Titel <span aria-hidden="true">*</span>
+              Title <span aria-hidden="true">*</span>
             </label>
             <input className={inputClass} id={`${formId}-title`} name="title" required />
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-short-title`}>
-              Korte titel <span aria-hidden="true">*</span>
+              Short title <span aria-hidden="true">*</span>
             </label>
             <input className={inputClass} id={`${formId}-short-title`} name="short_title" required />
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-issuer`}>
-              Uitgever <span aria-hidden="true">*</span>
+              Issuer <span aria-hidden="true">*</span>
             </label>
             <input
               className={inputClass}
@@ -160,30 +211,30 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-territory`}>
-              Grondgebied <span aria-hidden="true">*</span>
+              Jurisdiction <span aria-hidden="true">*</span>
             </label>
             <input
               className={inputClass}
               id={`${formId}-territory`}
               name="territory"
-              placeholder="Bijvoorbeeld Schoten"
+              placeholder="For example, Schoten"
               required
             />
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-level`}>
-              Niveau <span aria-hidden="true">*</span>
+              Level <span aria-hidden="true">*</span>
             </label>
             <select className={inputClass} defaultValue="gemeentelijk" id={`${formId}-level`} name="level" required>
-              <option value="gemeentelijk">Gemeentelijk</option>
-              <option value="provinciaal">Provinciaal</option>
-              <option value="vlaams">Vlaams</option>
-              <option value="federaal">Federaal</option>
+              <option value="gemeentelijk">Municipal</option>
+              <option value="provinciaal">Provincial</option>
+              <option value="vlaams">Flemish</option>
+              <option value="federaal">Federal</option>
             </select>
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-nature`}>
-              Aard <span aria-hidden="true">*</span>
+              Type <span aria-hidden="true">*</span>
             </label>
             <select
               className={inputClass}
@@ -195,8 +246,8 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
               }}
               value={nature}
             >
-              <option value="wetgeving">Wetgeving</option>
-              <option value="richtlijn">Richtlijn</option>
+              <option value="wetgeving">Legislation</option>
+              <option value="richtlijn">Guidance</option>
             </select>
           </div>
           <div>
@@ -204,14 +255,14 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
               Status <span aria-hidden="true">*</span>
             </label>
             <select className={inputClass} defaultValue="van_kracht" id={`${formId}-status`} name="status" required>
-              <option value="van_kracht">Van kracht</option>
-              <option value="historisch">Historisch</option>
-              <option value="onbekend">Onbekend</option>
+              <option value="van_kracht">In force</option>
+              <option value="historisch">Historical</option>
+              <option value="onbekend">Unknown</option>
             </select>
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-adopted`}>
-              Aangenomen op <span className="font-normal text-slate-500">(optioneel)</span>
+              Adopted on <span className="font-normal text-slate-500">(optional)</span>
             </label>
             <input className={inputClass} id={`${formId}-adopted`} name="adopted_on" type="date" />
           </div>
@@ -219,11 +270,11 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
 
         {nature === "wetgeving" ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-semibold text-slate-800">Geldigheid wetgeving</p>
+            <p className="text-sm font-semibold text-slate-800">Legislation validity</p>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass} htmlFor={`${formId}-effective-from`}>
-                  Van kracht vanaf {!effectiveFromUnknown ? <span aria-hidden="true">*</span> : null}
+                  Effective from {!effectiveFromUnknown ? <span aria-hidden="true">*</span> : null}
                 </label>
                 <input
                   className={inputClass}
@@ -236,7 +287,7 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
               </div>
               <div>
                 <label className={labelClass} htmlFor={`${formId}-effective-until`}>
-                  Van kracht tot <span className="font-normal text-slate-500">(optioneel)</span>
+                  Effective until <span className="font-normal text-slate-500">(optional)</span>
                 </label>
                 <input className={inputClass} id={`${formId}-effective-until`} name="effective_until" type="date" />
               </div>
@@ -248,13 +299,13 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
                 onChange={(event) => setEffectiveFromUnknown(event.target.checked)}
                 type="checkbox"
               />
-              Datum van inwerkingtreding is onbekend
+              Effective date is unknown
             </label>
           </div>
         ) : (
           <div>
             <label className={labelClass} htmlFor={`${formId}-published`}>
-              Gepubliceerd op <span aria-hidden="true">*</span>
+              Published on <span aria-hidden="true">*</span>
             </label>
             <input className={inputClass} id={`${formId}-published`} name="published_on" required type="date" />
           </div>
@@ -263,13 +314,13 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
         <div className="grid gap-5 md:grid-cols-2">
           <div>
             <label className={labelClass} htmlFor={`${formId}-origin-url`}>
-              Officiële link <span className="font-normal text-slate-500">(optioneel)</span>
+              Official link <span className="font-normal text-slate-500">(optional)</span>
             </label>
             <input className={inputClass} id={`${formId}-origin-url`} name="origin_url" type="url" />
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-supersedes`}>
-              Vervangt <span className="font-normal text-slate-500">(optioneel)</span>
+              Supersedes <span className="font-normal text-slate-500">(optional)</span>
             </label>
             <select
               className={inputClass}
@@ -279,10 +330,10 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
             >
               <option value="">
                 {!issuer.trim()
-                  ? "Vul eerst de uitgever in"
+                  ? "Enter the issuer first"
                   : sameIssuerSources.length === 0
-                    ? "Geen actieve bron van dezelfde uitgever"
-                    : "Vervangt geen bestaande bron"}
+                    ? "No active source from the same issuer"
+                    : "Does not supersede an existing source"}
               </option>
               {sameIssuerSources.map((source) => (
                 <option key={source.id} value={source.id}>
@@ -291,18 +342,18 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
               ))}
             </select>
             <p className="mt-1.5 text-xs leading-5 text-slate-500">
-              Alleen actieve bronnen van exact dezelfde uitgever worden getoond.
+              Only active sources from the exact same issuer are shown.
             </p>
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-added-by`}>
-              Toegevoegd door <span aria-hidden="true">*</span>
+              Added by <span aria-hidden="true">*</span>
             </label>
             <input autoComplete="name" className={inputClass} id={`${formId}-added-by`} name="added_by" required />
           </div>
           <div>
             <label className={labelClass} htmlFor={`${formId}-notes`}>
-              Interne notitie <span className="font-normal text-slate-500">(optioneel)</span>
+              Internal note <span className="font-normal text-slate-500">(optional)</span>
             </label>
             <input className={inputClass} id={`${formId}-notes`} name="notes" />
           </div>
@@ -315,19 +366,19 @@ export function SourceForm({ sources, disabled = false, onUpload }: SourceFormPr
             <div className="font-medium text-emerald-700">
               <p>{state.message}</p>
               <Link className="mt-1 inline-block underline underline-offset-2 hover:text-emerald-900" href="/">
-                Ga naar Antwoorden en analyseer de vraag opnieuw
+                Go to Answers and rerun the analysis
               </Link>
             </div>
           ) : null}
           {state.kind === "error" ? <p className="font-medium text-red-700">{state.message}</p> : null}
-          {state.kind === "uploading" ? <p className="text-slate-600">Pdf verwerken en passages opbouwen…</p> : null}
+          {state.kind === "uploading" ? <p className="text-slate-600">Processing PDF and creating passages…</p> : null}
         </div>
         <button
           className="inline-flex min-h-11 items-center justify-center rounded-lg bg-teal-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 disabled:cursor-wait disabled:bg-slate-400"
           disabled={isSubmitting}
           type="submit"
         >
-          {state.kind === "uploading" ? "Bron toevoegen…" : "Bron toevoegen"}
+          {state.kind === "uploading" ? "Adding source…" : "Add source"}
         </button>
       </div>
     </form>

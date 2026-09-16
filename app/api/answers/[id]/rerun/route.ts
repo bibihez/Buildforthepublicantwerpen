@@ -9,21 +9,21 @@ export const maxDuration = 300;
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const existing = getAnswer(id);
-  if (!existing) return Response.json({ error: 'Antwoord niet gevonden' } satisfies ApiError, { status: 404 });
+  if (!existing) return Response.json({ error: 'Answer not found' } satisfies ApiError, { status: 404 });
   if (existing.status === 'goedgekeurd') {
-    return Response.json({ error: 'Dit antwoord is goedgekeurd. Maak een nieuwe versie.' } satisfies ApiError, { status: 409 });
+    return Response.json({ error: 'This answer is approved. Create a new version.' } satisfies ApiError, { status: 409 });
   }
   let body: RerunRequest;
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'Ongeldige aanvraag' } satisfies ApiError, { status: 400 });
+    return Response.json({ error: 'Invalid request' } satisfies ApiError, { status: 400 });
   }
   if (body.revision !== existing.revision) {
-    return Response.json({ error: 'Dit antwoord werd intussen gewijzigd. Herlaad de pagina.' } satisfies ApiError, { status: 409 });
+    return Response.json({ error: 'This answer has changed. Reload the page.' } satisfies ApiError, { status: 409 });
   }
   if (!body.casus?.question || !Array.isArray(body.casus.subquestions) || !Array.isArray(body.casus.facts)) {
-    return Response.json({ error: 'Ongeldige casus' } satisfies ApiError, { status: 400 });
+    return Response.json({ error: 'Invalid case' } satisfies ApiError, { status: 400 });
   }
   try {
     const answer = await analyse({ ...body.casus, municipality: existing.casus.municipality }, existing);
@@ -36,6 +36,6 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     } catch {
       fallback = undefined;
     }
-    return Response.json({ error: 'Geen bevindingen opgesteld. De gevonden passages staan hieronder.', fallback } satisfies ApiError, { status: 502 });
+    return Response.json({ error: 'No findings were produced. The retrieved passages are shown below.', fallback } satisfies ApiError, { status: 502 });
   }
 }

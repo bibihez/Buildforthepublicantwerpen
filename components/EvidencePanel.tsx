@@ -1,4 +1,16 @@
-import type { AnswerResponse, Citation, Passage } from "@/lib/types";
+import type { AnswerResponse, Citation, Level, Nature, Passage } from "@/lib/types";
+
+const levelLabels: Record<Level, string> = {
+  federaal: "Federal",
+  vlaams: "Flemish",
+  provinciaal: "Provincial",
+  gemeentelijk: "Municipal",
+};
+
+const natureLabels: Record<Nature, string> = {
+  wetgeving: "Legislation",
+  richtlijn: "Guidance",
+};
 
 function excerpt(passage: Passage, citation: Citation) {
   const exactIndex = passage.text.indexOf(citation.quote);
@@ -16,10 +28,10 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
   if (!finding) {
     return (
       <aside className="panel evidence-panel">
-        <p className="eyebrow">Bewijs</p>
-        <h2>Bronpassages</h2>
+        <p className="eyebrow">Evidence</p>
+        <h2>Source passages</h2>
         <div className="empty-state">
-          <p>Selecteer een bevinding om het bewijs te controleren.</p>
+          <p>Select a finding to review its evidence.</p>
         </div>
       </aside>
     );
@@ -29,12 +41,12 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
     <aside className="panel evidence-panel" aria-labelledby="evidence-heading">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Bewijs</p>
-          <h2 id="evidence-heading">Bronpassages</h2>
+          <p className="eyebrow">Evidence</p>
+          <h2 id="evidence-heading">Source passages</h2>
         </div>
         <span className="count">{finding.citations.length}</span>
       </div>
-      <p className="evidence-warning">Een gecontroleerd citaat bewijst niet dat de interpretatie juridisch juist is.</p>
+      <p className="evidence-warning">A verified quote does not prove that its legal interpretation is correct.</p>
 
       {finding.citations.map((citation, index) => {
         const passage = data.passages[citation.passage_id];
@@ -42,7 +54,7 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
         const verdict = source ? data.answer.verdicts.find((item) => item.source_id === source.id) : undefined;
 
         if (!passage || !source) {
-          return <p className="error-banner" key={`${citation.passage_id}-${index}`}>Passage {citation.passage_id} ontbreekt in het antwoord.</p>;
+          return <p className="error-banner" key={`${citation.passage_id}-${index}`}>Passage {citation.passage_id} is missing from the answer.</p>;
         }
 
         return (
@@ -53,30 +65,30 @@ export function EvidencePanel({ data, selectedId }: { data: AnswerResponse; sele
                 <p>{passage.article || "Passage"} · p. {passage.page_from}{passage.page_to !== passage.page_from ? `–${passage.page_to}` : ""}</p>
               </div>
               <a className="button button-small button-secondary" href={`/files/${source.id}#page=${passage.page_from}`} target="_blank" rel="noreferrer">
-                Open bron
+                Open source
               </a>
             </div>
             <div className="chip-row">
-              <span className="chip">{source.level}</span>
-              <span className="chip">{source.nature}</span>
+              <span className="chip">{levelLabels[source.level]}</span>
+              <span className="chip">{natureLabels[source.nature]}</span>
               <span className="chip">{source.territory}</span>
             </div>
             <div className="quote-block">
-              <p className="quote-label">Exact citaat</p>
+              <p className="quote-label">Exact quote</p>
               <blockquote><mark>{citation.quote}</mark></blockquote>
             </div>
             <details>
-              <summary>Toon omringende passage</summary>
+              <summary>Show surrounding passage</summary>
               <p className="passage-text">{excerpt(passage, citation)}</p>
             </details>
             <div className="source-check">
-              <strong>Broncontrole</strong>
+              <strong>Source check</strong>
               <p className="verdict-line">
                 <span aria-hidden="true">{verdict?.verdict === "gecontroleerd" ? "✓" : verdict?.verdict === "onzeker" ? "?" : "×"}</span>
-                {verdict?.verdict === "gecontroleerd" ? "Broncontrole geslaagd" : verdict?.verdict === "onzeker" ? "Broncontrole onzeker" : "Bron niet gebruikt"}
+                {verdict?.verdict === "gecontroleerd" ? "Source check passed" : verdict?.verdict === "onzeker" ? "Source check uncertain" : "Source not used"}
               </p>
               {verdict?.reasons.map((reason) => <p key={reason}>{reason}</p>)}
-              <p className="hint">Broncontrole controleert metadata, niet de juridische toepasselijkheid.</p>
+              <p className="hint">The source check verifies metadata, not legal applicability.</p>
             </div>
           </section>
         );

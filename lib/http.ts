@@ -8,7 +8,7 @@ export async function readJson<T>(request: Request): Promise<T> {
   try {
     return (await request.json()) as T;
   } catch {
-    throw new RequestError('Ongeldige aanvraag', 400);
+    throw new RequestError('Invalid request', 400);
   }
 }
 
@@ -16,5 +16,5 @@ export async function readJson<T>(request: Request): Promise<T> {
 export function handleError(where: string, err: unknown): Response {
   if (err instanceof RequestError) return fail(err.message, err.status);
   console.error(where, err);
-  return fail('Er ging iets mis op de server', 500);
+  return fail('Something went wrong on the server', 500);
 }

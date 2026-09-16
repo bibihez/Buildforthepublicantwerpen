@@ -11,7 +11,7 @@ type HistoryState =
   | { status: "error"; message: string }
   | { status: "ready"; answers: Answer[] };
 
-const dateFormatter = new Intl.DateTimeFormat("nl-BE", {
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "medium",
   timeStyle: "short",
   timeZone: "Europe/Brussels",
@@ -23,7 +23,7 @@ function formatDate(value: string) {
 }
 
 async function errorMessage(response: Response) {
-  const fallback = `Historiek kon niet worden geladen (${response.status}).`;
+  const fallback = `Answer history could not be loaded (${response.status}).`;
 
   try {
     const body = (await response.json()) as Partial<ApiError>;
@@ -52,7 +52,7 @@ export function HistoryList() {
 
         const data = (await response.json()) as { answers?: Answer[] };
         if (!Array.isArray(data.answers)) {
-          throw new Error("De server gaf geen geldige antwoordhistoriek terug.");
+          throw new Error("The server returned invalid answer history data.");
         }
 
         const answers = [...data.answers].sort(
@@ -68,7 +68,7 @@ export function HistoryList() {
           message:
             error instanceof Error
               ? error.message
-              : "Historiek kon niet worden geladen.",
+              : "Answer history could not be loaded.",
         });
       }
     }
@@ -80,8 +80,8 @@ export function HistoryList() {
   if (state.status === "loading") {
     return (
       <div className={styles.stateBox} role="status">
-        <strong>Historiek laden…</strong>
-        De bewaarde antwoorden worden opgehaald.
+        <strong>Loading answer history…</strong>
+        Retrieving saved answers.
       </div>
     );
   }
@@ -89,7 +89,7 @@ export function HistoryList() {
   if (state.status === "error") {
     return (
       <div className={`${styles.stateBox} ${styles.errorBox}`} role="alert">
-        <strong>Historiek niet beschikbaar</strong>
+        <strong>Answer history unavailable</strong>
         {state.message}
       </div>
     );
@@ -98,22 +98,22 @@ export function HistoryList() {
   if (state.answers.length === 0) {
     return (
       <div className={styles.stateBox}>
-        <strong>Nog geen antwoorden</strong>
-        Zodra een vraag is geanalyseerd, verschijnt de versie hier.
+        <strong>No answers yet</strong>
+        Once a question has been analysed, its version will appear here.
       </div>
     );
   }
 
   return (
-    <section className={styles.panel} aria-label="Antwoordhistoriek">
+    <section className={styles.panel} aria-label="Answer history">
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th scope="col">Datum</th>
-              <th scope="col">Vraag</th>
+              <th scope="col">Date</th>
+              <th scope="col">Question</th>
               <th scope="col">Status</th>
-              <th scope="col">Goedgekeurd door</th>
+              <th scope="col">Approved by</th>
             </tr>
           </thead>
           <tbody>
@@ -138,7 +138,7 @@ export function HistoryList() {
                         approved ? styles.statusApproved : styles.statusDraft
                       }`}
                     >
-                      {approved ? "Goedgekeurd" : "Concept"}
+                      {approved ? "Approved" : "Draft"}
                     </span>
                   </td>
                   <td>{answer.approved_by || "—"}</td>

@@ -14,8 +14,8 @@ export class RequestError extends Error {
  * Facts or reviews changing make the reply stale, unless the same request saves a reply text.
  */
 export function applyUpdate(answer: Answer, req: UpdateAnswerRequest, now: string): Answer {
-  if (answer.status === 'goedgekeurd') throw new RequestError('Dit antwoord is goedgekeurd. Maak een nieuwe versie.', 409);
-  if (req.revision !== answer.revision) throw new RequestError('Dit antwoord werd intussen gewijzigd. Herlaad de pagina.', 409);
+  if (answer.status === 'goedgekeurd') throw new RequestError('This answer is approved. Create a new version.', 409);
+  if (req.revision !== answer.revision) throw new RequestError('This answer has changed. Reload the page.', 409);
 
   const next: Answer = structuredClone(answer);
   let stale = false;
@@ -27,12 +27,12 @@ export function applyUpdate(answer: Answer, req: UpdateAnswerRequest, now: strin
 
   for (const r of req.finding_reviews ?? []) {
     const f = next.findings.find((x) => x.id === r.finding_id);
-    if (!f) throw new RequestError(`Bevinding ${r.finding_id} bestaat niet`, 400);
-    if (!r.reviewed_by?.trim()) throw new RequestError('Naam van de medewerker ontbreekt', 400);
-    if (r.review === 'gecorrigeerd' && !r.corrected_statement?.trim()) throw new RequestError('Een correctie heeft een nieuwe tekst nodig', 400);
-    if (r.review === 'verworpen' && !r.review_reason?.trim()) throw new RequestError('Verwerpen vraagt een reden', 400);
+    if (!f) throw new RequestError(`Finding ${r.finding_id} does not exist`, 400);
+    if (!r.reviewed_by?.trim()) throw new RequestError('Officer name is missing', 400);
+    if (r.review === 'gecorrigeerd' && !r.corrected_statement?.trim()) throw new RequestError('A correction requires new text', 400);
+    if (r.review === 'verworpen' && !r.review_reason?.trim()) throw new RequestError('A rejection requires a reason', 400);
     if (r.bulk && (r.review !== 'bevestigd' || f.status !== 'citaat_gecontroleerd')) {
-      throw new RequestError('In bulk bevestigen kan alleen voor gecontroleerde citaten', 400);
+      throw new RequestError('Bulk confirmation is only available for verified quotes', 400);
     }
     f.review = r.review;
     f.corrected_statement = r.review === 'gecorrigeerd' ? r.corrected_statement!.trim() : null;
@@ -47,7 +47,7 @@ export function applyUpdate(answer: Answer, req: UpdateAnswerRequest, now: strin
 
   for (const d of req.not_found_decisions ?? []) {
     const n = next.not_found.find((x) => x.subquestion === d.subquestion);
-    if (!n) throw new RequestError(`Onbekende vraag: ${d.subquestion}`, 400);
+    if (!n) throw new RequestError(`Unknown question: ${d.subquestion}`, 400);
     n.decision = d.decision;
     stale = true;
   }

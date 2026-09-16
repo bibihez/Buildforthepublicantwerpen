@@ -30,7 +30,7 @@ describe('ground', () => {
     const { findings } = run([finding({ condition: { quote: 'alleen voor foodtrucks', fact_id: 'voeding', fact_question: '' } })]);
     expect(findings[0].condition).toEqual({ quote: 'alleen voor foodtrucks', fact_id: 'voeding', quote_checked: false });
     expect(findings[0].status).toBe('onzeker');
-    expect(findings[0].status_reasons).toContain('Voorwaarde niet teruggevonden in de bron');
+    expect(findings[0].status_reasons).toContain('Condition not found in the source');
   });
 
   it('a checked condition stays checked', () => {
@@ -53,8 +53,8 @@ describe('ground', () => {
       finding({ subquestion: 'Kost?', statement: 'Het kost 30 euro.', citations: [{ passage_id: 'pt', quote: 'De aanvraag kost 25 euro.' }] }),
     ]);
     expect(findings[0].status).toBe('onzeker');
-    expect(findings[0].status_reasons.join(' ')).toContain('Getal niet in het citaat: 30');
-    expect(findings[0].status_reasons.join(' ')).toContain('Broncontrole onzeker');
+    expect(findings[0].status_reasons.join(' ')).toContain('Number not present in the quote: 30');
+    expect(findings[0].status_reasons.join(' ')).toContain('Source check uncertain');
   });
 
   it('a conflict → tegenstrijdig', () => {

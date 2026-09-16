@@ -14,7 +14,7 @@ export class ClientError extends Error {
   details: ApiError | null;
 
   constructor(status: number, details: ApiError | null) {
-    super(details?.error || `De aanvraag is mislukt (${status}).`);
+    super(details?.error || `The request failed (${status}).`);
     this.name = "ClientError";
     this.status = status;
     this.details = details;
@@ -98,4 +98,3 @@ export const sourceClient = {
     });
   },
 };
-

@@ -7,8 +7,8 @@ export function NotUsedList({ data }: { data: AnswerResponse }) {
     <section className="panel not-used-panel">
       <div className="panel-heading compact">
         <div>
-          <p className="eyebrow">Transparantie</p>
-          <h2>Relevante niet-gebruikte bronnen</h2>
+          <p className="eyebrow">Transparency</p>
+          <h2>Relevant sources not used</h2>
         </div>
         <span className="count">{data.answer.not_used.length}</span>
       </div>

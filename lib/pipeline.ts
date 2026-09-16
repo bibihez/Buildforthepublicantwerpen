@@ -40,7 +40,7 @@ function passageForModel(p: Passage, sources: Map<string, Source>): string {
   const pages = p.page_from === p.page_to ? `p. ${p.page_from}` : `p. ${p.page_from}-${p.page_to}`;
   return [
     `### passage_id: ${p.id}`,
-    `bron: ${s?.short_title ?? p.source_id} · ${s?.level ?? ''} · ${s?.nature ?? ''} · ${p.article ?? 'geen artikel'} · ${pages}`,
+    `source: ${s?.short_title ?? p.source_id} · ${s?.level ?? ''} · ${s?.nature ?? ''} · ${p.article ?? 'no article'} · ${pages}`,
     p.text,
   ].join('\n');
 }
@@ -53,13 +53,13 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
   const { candidates, notUsed } = findCandidates(casus, verdicts, getIndex());
 
   const user = [
-    `## Casus`,
+    `## Case`,
     JSON.stringify(
-      { vraag: casus.question, gemeente: casus.municipality, datum: casus.date, activiteit: casus.activity, subquestions: casus.subquestions, facts: casus.facts.map(({ id, question, answer }) => ({ id, question, answer })) },
+      { question: casus.question, municipality: casus.municipality, date: casus.date, activity: casus.activity, subquestions: casus.subquestions, facts: casus.facts.map(({ id, question, answer }) => ({ id, question, answer })) },
       null,
       2,
     ),
-    `## Passages`,
+    `## Source passages`,
     ...candidates.map((p) => passageForModel(p, sourceMap)),
   ].join('\n\n');
 

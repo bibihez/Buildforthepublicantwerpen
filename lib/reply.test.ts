@@ -32,7 +32,7 @@ describe('buildReply', () => {
   it('keeps an unknown condition explicit and omits it when the fact is no', () => {
     const unknown = response();
     expect(buildReply(unknown)).toContain(
-      'Indien de aanvrager voeding verkoopt: Voeg de toepasselijke FAVV-attesten toe',
+      'If the answer to “Verkoopt de aanvrager voeding?” is yes: Voeg de toepasselijke FAVV-attesten toe',
     );
 
     const no = response();
@@ -49,7 +49,7 @@ describe('buildReply', () => {
     expect(reply).toContain(
       'Voeg de toepasselijke FAVV-attesten toe bij verkoop van voeding. [2]',
     );
-    expect(reply).not.toContain('Indien de aanvrager voeding verkoopt');
+    expect(reply).not.toContain('If the answer to');
   });
 
   it('does not duplicate an existing conditional prefix', () => {
@@ -59,9 +59,9 @@ describe('buildReply', () => {
 
     const reply = buildReply(result);
     expect(reply).toContain(
-      'Indien je een zelfstandige uitbater bent: Voeg de toepasselijke FAVV-attesten toe',
+      'If the following condition applies — “je een zelfstandige uitbater bent”: Voeg de toepasselijke FAVV-attesten toe',
     );
-    expect(reply).not.toContain('Indien Als');
+    expect(reply).not.toContain('If Als');
   });
 
   it('retains the source condition when the fact is yes', () => {
@@ -69,7 +69,7 @@ describe('buildReply', () => {
     yes.answer.casus.facts[0].answer = 'ja';
 
     expect(buildReply(yes)).toContain(
-      'Voorwaarde: enkel van toepassing bij verkoop van voeding.',
+      'Condition: enkel van toepassing bij verkoop van voeding.',
     );
   });
 
@@ -90,9 +90,11 @@ describe('buildReply', () => {
     const mentioned = buildReply(result);
 
     expect(mentioned).toContain(
-      'Over wat kost een standplaats vonden we in onze bronnen geen informatie.',
+      'No information was found in the available sources for the question: “Wat kost een standplaats?”',
     );
-    expect(mentioned).not.toMatch(/nemen contact op|laten weten|komen erop terug/i);
+    expect(mentioned).not.toMatch(
+      /we will contact|let you know|follow up|nemen contact op|laten weten|komen erop terug/i,
+    );
 
     result.answer.not_found[0].decision = 'weglaten';
     expect(buildReply(result)).not.toContain('Wat kost een standplaats?');
@@ -105,7 +107,7 @@ describe('buildReply', () => {
     const uncertain = reviewedResponse();
     uncertain.answer.findings[3].conflict_decision = 'onzeker_vermelden';
     expect(buildReply(uncertain)).toContain(
-      'Hierover bestaan verschillende bronnen; dit wordt nog nagekeken.',
+      'The available sources conflict on this point; this still needs to be checked.',
     );
 
     const current = reviewedResponse();
@@ -129,6 +131,8 @@ describe('buildReply', () => {
     const result = buildReply(fixtureApprovedAnswerResponse.answer);
 
     expect(result).toContain('Marktreglement Schoten 2024, Artikel 13 §3, p. 5');
-    expect(result).toContain('Hierover bestaan verschillende bronnen; dit wordt nog nagekeken.');
+    expect(result).toContain(
+      'The available sources conflict on this point; this still needs to be checked.',
+    );
   });
 });

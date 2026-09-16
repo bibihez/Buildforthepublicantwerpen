@@ -4,26 +4,26 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Bronwijzer · Schoten",
-  description: "Onderbouwde antwoorden uit gecontroleerde officiële bronnen.",
+  description: "Evidence-based answers from verified official sources.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="nl">
+    <html lang="en">
       <body>
         <header className="app-header">
-          <Link href="/" className="brand" aria-label="Bronwijzer startpagina">
+          <Link href="/" className="brand" aria-label="Bronwijzer home page">
             <span className="brand-mark" aria-hidden="true">B</span>
             <span>
               <strong>Bronwijzer</strong>
-              <small>Lokale economie · Schoten</small>
+              <small>Local economy · Schoten</small>
             </span>
           </Link>
-          <nav aria-label="Hoofdnavigatie">
-            <Link href="/">Nieuw antwoord</Link>
-            <Link href="/bronnen">Bronnen</Link>
-            <Link href="/notities">Notities</Link>
-            <Link href="/historiek">Historiek</Link>
+          <nav aria-label="Main navigation">
+            <Link href="/">New answer</Link>
+            <Link href="/bronnen">Sources</Link>
+            <Link href="/notities">Notes</Link>
+            <Link href="/historiek">History</Link>
           </nav>
         </header>
         {children}

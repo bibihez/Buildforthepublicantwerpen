@@ -28,38 +28,38 @@ describe('verdict', () => {
   it('fee regulation before it takes effect → niet_gebruikt', () => {
     const v = check('retributie-markt', '2025-06-01');
     expect(v.verdict).toBe('niet_gebruikt');
-    expect(v.reasons.join(' ')).toContain('Nog niet van kracht');
+    expect(v.reasons.join(' ')).toContain('Not yet in force');
   });
 
   it('provincial innovation fund passes the territory check for Schoten', () => {
     const v = check('innovatiefonds');
     expect(v.verdict).not.toBe('niet_gebruikt');
-    expect(v.reasons.join(' ')).not.toContain('Ander grondgebied');
+    expect(v.reasons.join(' ')).not.toContain('Different territory');
   });
 
   it('royal decree 2006 → niet_gebruikt, historisch', () => {
     const v = check('hist-kb-2006');
     expect(v.verdict).toBe('niet_gebruikt');
-    expect(v.reasons.join(' ')).toContain('Historisch');
+    expect(v.reasons.join(' ')).toContain('Historical');
   });
 
   it('terrace rules without dates → onzeker', () => {
     const v = check('terrassen');
     expect(v.verdict).toBe('onzeker');
-    expect(v.reasons).toContain('Geen datum van inwerkingtreding');
+    expect(v.reasons).toContain('No effective date');
   });
 
   it('VLAIO guidance → gecontroleerd with the Richtlijn reason, no date check', () => {
     const v = check('vlaio-eigen-zaak', '1990-01-01');
     expect(v.verdict).toBe('gecontroleerd');
-    expect(v.reasons.some((r) => r.startsWith('Richtlijn, gepubliceerd januari 2026'))).toBe(true);
-    expect(v.reasons.join(' ')).not.toMatch(/van kracht/);
+    expect(v.reasons.some((r) => r.startsWith('Guidance, published January 2026'))).toBe(true);
+    expect(v.reasons.join(' ')).not.toMatch(/in force/);
   });
 
   it('old market regulation → niet_gebruikt, vervangen', () => {
     const v = check('markt-oud');
     expect(v.verdict).toBe('niet_gebruikt');
-    expect(v.reasons).toContain('Vervangen door Marktreglement Schoten 2024');
+    expect(v.reasons).toContain('Superseded by Marktreglement Schoten 2024');
   });
 
   it('deactivated source names who and why', () => {
@@ -68,11 +68,11 @@ describe('verdict', () => {
       events: [{ id: 'e1', source_id: 'markt-2024', at: '2026-09-16T13:00:00Z', by: 'Marleen', type: 'gedeactiveerd', reason: 'fout bestand' }],
     });
     expect(v.verdict).toBe('niet_gebruikt');
-    expect(v.reasons).toContain('Gedeactiveerd door Marleen: fout bestand');
+    expect(v.reasons).toContain('Deactivated by Marleen: fout bestand');
   });
 
   it('other territory → niet_gebruikt', () => {
     const v = verdict({ ...src('markt-2024'), territory: 'Brasschaat' }, casus('2026-09-16'), config);
-    expect(v.reasons).toContain('Ander grondgebied: Brasschaat');
+    expect(v.reasons).toContain('Different territory: Brasschaat');
   });
 });

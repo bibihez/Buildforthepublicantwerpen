@@ -70,7 +70,7 @@ export function ground(
     const dropped = f.citations.length - citations.length;
     if (dropped > 0) {
       uncertain = true;
-      reasons.push(`${dropped} citaat${dropped > 1 ? 'en' : ''} niet teruggevonden in de bron en weggelaten`);
+      reasons.push(`${dropped} quote${dropped > 1 ? 's were' : ' was'} not found in the source and omitted`);
     }
     const cited = citations.map((c) => byId.get(c.passage_id)!);
 
@@ -81,11 +81,11 @@ export function ground(
       condition = { quote: f.condition.quote, fact_id: id, quote_checked };
       if (!quote_checked) {
         uncertain = true;
-        reasons.push('Voorwaarde niet teruggevonden in de bron');
+        reasons.push('Condition not found in the source');
       }
       if (!knownFacts.has(id)) {
         knownFacts.add(id);
-        added_facts.push({ id, question: f.condition.fact_question.trim() || `Geldt voor de aanvrager: "${f.condition.quote}"?`, answer: 'onbekend', set_by: 'ai' });
+        added_facts.push({ id, question: f.condition.fact_question.trim() || `Does this apply to the applicant: "${f.condition.quote}"?`, answer: 'onbekend', set_by: 'ai' });
       }
     }
 
@@ -93,24 +93,24 @@ export function ground(
       const v = verdictOf.get(sourceId);
       if (v?.verdict === 'onzeker') {
         uncertain = true;
-        reasons.push(`Broncontrole onzeker voor ${titleOf(sourceId)}: ${v.reasons.join(' · ')}`);
+        reasons.push(`Source check uncertain for ${titleOf(sourceId)}: ${v.reasons.join(' · ')}`);
       }
     }
 
     const missing = ungroundedNumbers(f.statement, citations.map((c) => c.quote));
     if (missing.length) {
       uncertain = true;
-      reasons.push(`Getal niet in het citaat: ${missing.join(', ')}`);
+      reasons.push(`Number not present in the quote: ${missing.join(', ')}`);
     }
 
     let conflict_with: Finding['conflict_with'] = null;
     if (f.conflict_with) {
       if (byId.has(f.conflict_with.passage_id)) {
         conflict_with = f.conflict_with;
-        reasons.push(`Tegenstrijdig met ${titleOf(byId.get(f.conflict_with.passage_id)!.source_id)}: ${f.conflict_with.explanation}`);
+        reasons.push(`Conflicts with ${titleOf(byId.get(f.conflict_with.passage_id)!.source_id)}: ${f.conflict_with.explanation}`);
       } else {
         uncertain = true;
-        reasons.push(`Tegenstrijdigheid gemeld zonder geldige passage: ${f.conflict_with.explanation}`);
+        reasons.push(`Conflict reported without a valid passage: ${f.conflict_with.explanation}`);
       }
     }
 

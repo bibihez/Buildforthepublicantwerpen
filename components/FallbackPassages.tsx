@@ -7,19 +7,19 @@ export function FallbackPassages({ fallback }: { fallback: Fallback }) {
     <section className="panel fallback-panel" aria-labelledby="fallback-heading">
       <div className="panel-heading compact">
         <div>
-          <p className="eyebrow">Handmatige controle</p>
-          <h2 id="fallback-heading">Gevonden bronpassages</h2>
+          <p className="eyebrow">Manual review</p>
+          <h2 id="fallback-heading">Retrieved source passages</h2>
         </div>
         <span className="count">{fallback.candidate_ids.length}</span>
       </div>
       <p className="hint">
-        De AI stelde geen bevindingen op. Deze zoekresultaten zijn geen conclusies; beoordeel de passages zelf.
+        The AI produced no findings. These search results are not conclusions; review the passages directly.
       </p>
       <ol className="fallback-list">
         {fallback.candidate_ids.map((passageId) => {
           const passage = fallback.passages[passageId];
           if (!passage) {
-            return <li className="error-banner" key={passageId}>Passage {passageId} ontbreekt in het antwoord.</li>;
+            return <li className="error-banner" key={passageId}>Passage {passageId} is missing from the answer.</li>;
           }
           const source = fallback.sources[passage.source_id];
           return (
@@ -31,7 +31,7 @@ export function FallbackPassages({ fallback }: { fallback: Fallback }) {
                 </div>
                 {source ? (
                   <a className="button button-small button-secondary" href={`/files/${source.id}#page=${passage.page_from}`} target="_blank" rel="noreferrer">
-                    Open bron
+                    Open source
                   </a>
                 ) : null}
               </div>

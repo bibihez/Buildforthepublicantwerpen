@@ -1,20 +1,20 @@
 import type { Finding } from "@/lib/types";
 
 const statusLabels: Record<Finding["status"], string> = {
-  citaat_gecontroleerd: "Citaat gecontroleerd",
-  onzeker: "Onzeker",
-  tegenstrijdig: "Tegenstrijdige passages",
+  citaat_gecontroleerd: "Quote verified",
+  onzeker: "Uncertain",
+  tegenstrijdig: "Conflicting passages",
 };
 
 const reviewLabels: Record<Exclude<Finding["review"], "open">, string> = {
-  bevestigd: "Bevestigd door medewerker",
-  gecorrigeerd: "Gecorrigeerd",
-  verworpen: "Verworpen",
+  bevestigd: "Confirmed by officer",
+  gecorrigeerd: "Corrected",
+  verworpen: "Rejected",
 };
 
 export function StatusBadge({ finding }: { finding: Finding }) {
   if (finding.review === "gecorrigeerd") {
-    return <span className="badge badge-warning">Tekst gewijzigd — niet gedekt door citaat</span>;
+    return <span className="badge badge-warning">Text changed—not covered by quote</span>;
   }
   if (finding.review !== "open") {
     return <span className={`badge badge-${finding.review}`}>{reviewLabels[finding.review]}</span>;
@@ -23,5 +23,5 @@ export function StatusBadge({ finding }: { finding: Finding }) {
 }
 
 export function NotFoundBadge() {
-  return <span className="badge badge-not-found">Niet gevonden in beschikbare bronnen</span>;
+  return <span className="badge badge-not-found">Not found in available sources</span>;
 }

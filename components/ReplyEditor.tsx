@@ -14,26 +14,26 @@ export function ReplyEditor({ value, stale, disabled, onChange, onRegenerate, on
     <section className="panel reply-panel" aria-labelledby="reply-heading">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Antwoord</p>
-          <h2 id="reply-heading">Concept voor de ondernemer</h2>
+          <p className="eyebrow">Reply</p>
+          <h2 id="reply-heading">Draft for the entrepreneur</h2>
         </div>
-        {stale ? <span className="badge badge-warning">Antwoord verouderd</span> : <span className="badge badge-confirmed">Actuele versie</span>}
+        {stale ? <span className="badge badge-warning">Reply out of date</span> : <span className="badge badge-confirmed">Current version</span>}
       </div>
-      <p className="hint">Bewerk de tekst vrij. Er wordt niets automatisch verzonden.</p>
+      <p className="hint">Edit the text freely. Nothing is sent automatically.</p>
       <textarea
         className="reply-editor"
         rows={12}
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        aria-label="Conceptantwoord"
+        aria-label="Draft reply"
       />
       <div className="button-row reply-buttons">
         <button type="button" className="button button-secondary" onClick={onRegenerate} disabled={disabled}>
-          Opnieuw opbouwen
+          Rebuild
         </button>
         <button type="button" className="button button-primary" onClick={onSave} disabled={disabled || !value.trim()}>
-          Antwoordversie opslaan
+          Save answer version
         </button>
       </div>
     </section>

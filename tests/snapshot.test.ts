@@ -45,8 +45,8 @@ describe('approval', () => {
   });
 
   it('a rejection needs a reason, a correction needs text', () => {
-    expect(() => applyUpdate(answer(), { revision: 1, finding_reviews: [{ finding_id: 'f1', review: 'verworpen', reviewed_by: 'M' }] }, NOW)).toThrow('reden');
-    expect(() => applyUpdate(answer(), { revision: 1, finding_reviews: [{ finding_id: 'f1', review: 'gecorrigeerd', reviewed_by: 'M' }] }, NOW)).toThrow('tekst');
+    expect(() => applyUpdate(answer(), { revision: 1, finding_reviews: [{ finding_id: 'f1', review: 'verworpen', reviewed_by: 'M' }] }, NOW)).toThrow('reason');
+    expect(() => applyUpdate(answer(), { revision: 1, finding_reviews: [{ finding_id: 'f1', review: 'gecorrigeerd', reviewed_by: 'M' }] }, NOW)).toThrow('text');
   });
 
   it('approval freezes a snapshot; any later change is refused; a new version is a draft again', () => {
@@ -61,7 +61,7 @@ describe('approval', () => {
     expect(approved.snapshot?.sources.map((s) => s.id)).toEqual(['markt-2024']);
     expect(approved.snapshot?.passages.map((p) => p.id)).toEqual(['p1']);
     expect(approvalBlockers(approved, approved.revision).map((b) => b.code)).toEqual(['already_approved']);
-    expect(() => applyUpdate(approved, { revision: approved.revision, reply_text: 'x' }, NOW)).toThrow('nieuwe versie');
+    expect(() => applyUpdate(approved, { revision: approved.revision, reply_text: 'x' }, NOW)).toThrow('new version');
 
     const draft = newVersion(approved, 'a2', NOW);
     expect(draft).toMatchObject({ id: 'a2', parent_id: 'a1', status: 'concept', revision: 1, snapshot: null, approved_by: null });

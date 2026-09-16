@@ -18,7 +18,7 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
   const [reason, setReason] = useState(finding.review_reason || "");
   const [conflictDecision, setConflictDecision] = useState<Finding["conflict_decision"]>(finding.conflict_decision);
   const [conflictReason, setConflictReason] = useState(finding.conflict_reason || "");
-  const reviewedBy = reviewer.trim() || "Medewerker lokale economie";
+  const reviewedBy = reviewer.trim() || "Local economy officer";
 
   const base = { finding_id: finding.id, reviewed_by: reviewedBy };
 
@@ -26,21 +26,21 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
     return (
       <div className="review-box" onClick={(event) => event.stopPropagation()}>
         <label>
-          Beslissing bij tegenstrijdige passages
+          Decision for conflicting passages
           <select
             value={conflictDecision || ""}
             disabled={disabled}
             onChange={(event) => setConflictDecision(event.target.value as Finding["conflict_decision"])}
           >
-            <option value="">Kies een beslissing</option>
-            <option value="deze">Deze passage volgen</option>
-            <option value="andere">Andere passage volgen</option>
-            <option value="onzeker_vermelden">Als onzeker vermelden</option>
-            <option value="weglaten">Weglaten</option>
+            <option value="">Choose a decision</option>
+            <option value="deze">Use this passage</option>
+            <option value="andere">Use the other passage</option>
+            <option value="onzeker_vermelden">Mention as uncertain</option>
+            <option value="weglaten">Omit</option>
           </select>
         </label>
         <label>
-          Motivering
+          Reason
           <textarea value={conflictReason} onChange={(event) => setConflictReason(event.target.value)} rows={2} />
         </label>
         <button
@@ -55,14 +55,14 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
             conflict_reason: conflictReason,
           })}
         >
-          Beslissing opslaan
+          Save decision
         </button>
       </div>
     );
   }
 
   if (finding.review !== "open") {
-    return finding.review_reason ? <p className="review-note">Motivering: {finding.review_reason}</p> : null;
+    return finding.review_reason ? <p className="review-note">Reason: {finding.review_reason}</p> : null;
   }
 
   return (
@@ -74,20 +74,20 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
           disabled={disabled}
           onClick={() => onReview({ ...base, review: "bevestigd" })}
         >
-          Bevestig
+          Confirm
         </button>
         <button className="button button-small button-secondary" type="button" onClick={() => setMode("correct")} disabled={disabled}>
-          Corrigeer
+          Correct
         </button>
         <button className="button button-small button-danger-quiet" type="button" onClick={() => setMode("reject")} disabled={disabled}>
-          Verwerp
+          Reject
         </button>
       </div>
 
       {mode === "correct" ? (
         <div className="inline-form">
           <label>
-            Gecorrigeerde tekst
+            Corrected text
             <textarea value={corrected} onChange={(event) => setCorrected(event.target.value)} rows={3} />
           </label>
           <button
@@ -96,7 +96,7 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
             disabled={!corrected.trim() || corrected.trim() === finding.statement.trim()}
             onClick={() => onReview({ ...base, review: "gecorrigeerd", corrected_statement: corrected.trim() })}
           >
-            Correctie opslaan
+            Save correction
           </button>
         </div>
       ) : null}
@@ -104,7 +104,7 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
       {mode === "reject" ? (
         <div className="inline-form">
           <label>
-            Reden voor verwerping
+            Reason for rejection
             <textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={2} />
           </label>
           <button
@@ -113,7 +113,7 @@ export function ReviewActions({ finding, reviewer, disabled, onReview }: Props) 
             disabled={!reason.trim()}
             onClick={() => onReview({ ...base, review: "verworpen", review_reason: reason.trim() })}
           >
-            Verwerping opslaan
+            Save rejection
           </button>
         </div>
       ) : null}

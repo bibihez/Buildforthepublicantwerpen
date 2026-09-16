@@ -37,7 +37,7 @@ export async function callJson<T extends z.ZodType>(
         reasoning: { effort },
         text: { format: zodTextFormat(schema, name) },
       });
-      if (res.output_parsed == null) throw new Error('Leeg antwoord van het model');
+      if (res.output_parsed == null) throw new Error('The model returned an empty response');
       return schema.parse(res.output_parsed);
     } catch (err) {
       lastError = err;

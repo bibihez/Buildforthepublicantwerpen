@@ -9,7 +9,7 @@ import type {
 } from '../../lib/types';
 
 export const FIXTURE_DEVELOPMENT_NOTICE =
-  'Uitsluitend voor ontwikkeling: onzekere en tegenstrijdige scenario\'s hieronder zijn synthetisch en zijn geen productiebronnen.';
+  'Development only: the uncertain and conflicting scenarios below are synthetic and are not production sources.';
 
 const marketSource: Source = {
   id: 'markt-2024',
@@ -158,22 +158,22 @@ const verdicts: SourceVerdict[] = [
   {
     source_id: marketSource.id,
     verdict: 'gecontroleerd',
-    reasons: ['Grondgebied Schoten gecontroleerd', 'Van kracht op 16 september 2026'],
+    reasons: ['Schoten territory checked', 'In force on 16 September 2026'],
   },
   {
     source_id: terraceSource.id,
     verdict: 'onzeker',
-    reasons: ['Geen datum van inwerkingtreding'],
+    reasons: ['No effective date'],
   },
   {
     source_id: conflictSource.id,
     verdict: 'gecontroleerd',
-    reasons: ['Richtlijn, gepubliceerd 2026-09-01 — geen regelgeving'],
+    reasons: ['Guidance, published 1 September 2026—not legislation'],
   },
   {
     source_id: historicSource.id,
     verdict: 'niet_gebruikt',
-    reasons: ['Vervangen door Marktreglement Schoten 2024'],
+    reasons: ['Superseded by Marktreglement Schoten 2024'],
   },
 ];
 
@@ -233,7 +233,7 @@ const draftFindings: Finding[] = [
     condition: null,
     conflict_with: null,
     status: 'onzeker',
-    status_reasons: ['Geen datum van inwerkingtreding'],
+    status_reasons: ['No effective date'],
     review: 'open',
   },
   {
@@ -252,7 +252,7 @@ const draftFindings: Finding[] = [
       explanation: 'Een andere passage vermeldt een termijn van zeven dagen.',
     },
     status: 'tegenstrijdig',
-    status_reasons: ['De beschikbare passages noemen verschillende indieningstermijnen.'],
+    status_reasons: ['The available passages give different submission deadlines.'],
     review: 'open',
     conflict_decision: null,
   },
@@ -291,7 +291,7 @@ const baseAnswer: Answer = {
     {
       source_id: historicSource.id,
       passage_id: 'fixture-oude-marktregel',
-      reason: 'Vervangen door Marktreglement Schoten 2024',
+      reason: 'Superseded by Marktreglement Schoten 2024',
     },
   ],
   precedent: null,
@@ -342,12 +342,12 @@ const approvedFindings: Finding[] = draftFindings.map((finding) => {
 
 const approvedReply = [
   'Vul het aanvraagformulier in op de website van de gemeente Schoten. [1]',
-  'Indien enkel van toepassing bij verkoop van voeding: Voeg de toepasselijke FAVV-attesten toe aan de aanvraag. [2]',
+  'If the answer to “Verkoopt de aanvrager voeding?” is yes: Voeg de toepasselijke FAVV-attesten toe aan de aanvraag. [2]',
   'Bij gebruik van een verwarmingstoestel vraagt de gemeente om een recent keuringsbewijs; de geldigheidsdatum van deze bron is onzeker. [3]',
-  'Hierover bestaan verschillende bronnen; dit wordt nog nagekeken. [4][5]',
-  'Over Wat kost een standplaats? vonden we in onze bronnen geen informatie.',
+  'The available sources conflict on this point; this still needs to be checked. [4][5]',
+  'No information was found in the available sources for the question: “Wat kost een standplaats?”',
   '',
-  'Bronnen:',
+  'Sources:',
   '[1] Marktreglement Schoten 2024, Artikel 13 §3, p. 5',
   '[2] Marktreglement Schoten 2024, Artikel 13 §3, p. 6',
   '[3] Ontwikkelfixture ongedateerde bijlage, Artikel 4, p. 2',

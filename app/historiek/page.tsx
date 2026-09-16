@@ -9,14 +9,14 @@ export default function HistoryPage() {
       <header className={styles.pageHeader}>
         <div>
           <p className={styles.eyebrow}>Bronwijzer</p>
-          <h1>Historiek</h1>
+          <h1>Answer history</h1>
           <p className={styles.intro}>
-            Bekijk concepten en goedgekeurde antwoorden. Een goedgekeurd antwoord
-            opent altijd de bewaarde momentopname van die specifieke versie.
+            Review draft and approved answers. An approved answer always opens
+            the saved snapshot of that specific version.
           </p>
         </div>
         <Link className={styles.secondaryLink} href="/">
-          Terug naar werkruimte
+          Back to workspace
         </Link>
       </header>
 

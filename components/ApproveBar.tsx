@@ -20,8 +20,8 @@ export function ApproveBar({ approved, reviewer, replyText, blockers, disabled, 
   return (
     <section className="approve-bar" aria-labelledby="approval-heading">
       <div>
-        <p className="eyebrow">Menselijke goedkeuring</p>
-        <h2 id="approval-heading">{approved ? "Deze versie is goedgekeurd" : "Controleer en keur deze versie goed"}</h2>
+        <p className="eyebrow">Human approval</p>
+        <h2 id="approval-heading">{approved ? "This version is approved" : "Review and approve this version"}</h2>
         {!approved && blockers.length > 0 ? (
           <ul className="blocker-list">
             {blockers.map((blocker, index) => <li key={`${blocker.code}-${blocker.ref || index}`}>{blocker.message}</li>)}
@@ -30,15 +30,15 @@ export function ApproveBar({ approved, reviewer, replyText, blockers, disabled, 
       </div>
       <div className="approve-controls">
         <label>
-          Naam medewerker
-          <input value={reviewer} onChange={(event) => onReviewerChange(event.target.value)} disabled={disabled || approved} placeholder="Voor- en achternaam" />
+          Officer name
+          <input value={reviewer} onChange={(event) => onReviewerChange(event.target.value)} disabled={disabled || approved} placeholder="First and last name" />
         </label>
         <div className="button-row">
           <button type="button" className="button button-primary" onClick={onApprove} disabled={disabled || approved || blockers.length > 0 || !reviewer.trim()}>
-            {approved ? "Goedgekeurd" : "Goedkeuren"}
+            {approved ? "Approved" : "Approve"}
           </button>
           <button type="button" className="button button-secondary" onClick={copyReply} disabled={!replyText.trim()}>
-            Kopieer antwoord
+            Copy reply
           </button>
         </div>
       </div>

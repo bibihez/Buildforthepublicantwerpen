@@ -8,9 +8,9 @@ export type VerdictContext = {
   events?: SourceEvent[];
 };
 
-const MONTHS = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-/** "2024-04-01" → "1 april 2024" · "2026-01" → "januari 2026" · "2022" → "2022". Anything else is shown as-is. */
+/** "2024-04-01" → "1 April 2024" · "2026-01" → "January 2026" · "2022" → "2022". Anything else is shown as-is. */
 export function formatDate(iso: string): string {
   const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(iso.trim());
   if (!m) return iso;
@@ -50,39 +50,39 @@ export function verdict(source: Source, casus: Casus, config: ScopeConfig, ctx: 
       .filter((e) => e.source_id === source.id && e.type === 'gedeactiveerd')
       .sort((a, b) => a.at.localeCompare(b.at))
       .pop();
-    fails.push(ev ? `Gedeactiveerd door ${ev.by}: ${ev.reason ?? 'geen reden opgegeven'}` : 'Gedeactiveerd');
+    fails.push(ev ? `Deactivated by ${ev.by}: ${ev.reason ?? 'no reason provided'}` : 'Deactivated');
   }
 
   // 2 · superseded
   if (source.superseded_by) {
     const next = ctx.sources?.find((s) => s.id === source.superseded_by);
-    fails.push(`Vervangen door ${next?.short_title ?? source.superseded_by}`);
+    fails.push(`Superseded by ${next?.short_title ?? source.superseded_by}`);
   }
 
   // 3 · status
-  if (source.status === 'historisch') fails.push('Historisch document — achtergrond, geen huidige regel');
-  else if (source.status === 'onbekend') unknowns.push('Status van het document onbekend');
+  if (source.status === 'historisch') fails.push('Historical document—background only, not a current rule');
+  else if (source.status === 'onbekend') unknowns.push('Document status unknown');
 
   // 4 · territory (topic is not territory: a provincial document passes for Schoten)
-  if (!source.territory?.trim()) unknowns.push('Grondgebied onbekend');
-  else if (!config.scope.includes(source.territory)) fails.push(`Ander grondgebied: ${source.territory}`);
+  if (!source.territory?.trim()) unknowns.push('Territory unknown');
+  else if (!config.scope.includes(source.territory)) fails.push(`Different territory: ${source.territory}`);
 
   // 5 · validity dates, legislation only. Guidance publication date is shown, never used as validity.
   if (source.nature === 'wetgeving') {
     const date = casus.date;
     if (!source.effective_from) {
-      unknowns.push('Geen datum van inwerkingtreding');
+      unknowns.push('No effective date');
     } else if (date < startOf(source.effective_from)) {
-      fails.push(`Nog niet van kracht op ${formatDate(date)} (van kracht vanaf ${formatDate(source.effective_from)})`);
+      fails.push(`Not yet in force on ${formatDate(date)} (effective from ${formatDate(source.effective_from)})`);
     }
     if (source.effective_until && date > endOf(source.effective_until)) {
-      fails.push(`Niet meer van kracht sinds ${formatDate(dayAfter(source.effective_until))}`);
+      fails.push(`No longer in force since ${formatDate(dayAfter(source.effective_until))}`);
     }
   } else {
     notes.push(
       source.published_on
-        ? `Richtlijn, gepubliceerd ${formatDate(source.published_on)} — geen regelgeving`
-        : 'Richtlijn, publicatiedatum onbekend — geen regelgeving',
+        ? `Guidance, published ${formatDate(source.published_on)}—not legislation`
+        : 'Guidance, publication date unknown—not legislation',
     );
   }
 

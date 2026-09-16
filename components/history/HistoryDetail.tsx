@@ -22,13 +22,13 @@ type ActionState =
   | { status: "error"; message: string; blockers: string[] }
   | { status: "success"; answerId: string };
 
-const dateFormatter = new Intl.DateTimeFormat("nl-BE", {
+const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "long",
   timeStyle: "short",
   timeZone: "Europe/Brussels",
 });
 
-const shortDateFormatter = new Intl.DateTimeFormat("nl-BE", {
+const shortDateFormatter = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "long",
   timeZone: "Europe/Brussels",
 });
@@ -44,11 +44,11 @@ function formatDate(value: string, includeTime = true) {
 function reviewLabel(review: Finding["review"]) {
   switch (review) {
     case "bevestigd":
-      return "Bevestigd door medewerker";
+      return "Confirmed by officer";
     case "gecorrigeerd":
-      return "Gecorrigeerd";
+      return "Corrected";
     case "verworpen":
-      return "Verworpen";
+      return "Rejected";
     default:
       return "Open";
   }
@@ -57,35 +57,67 @@ function reviewLabel(review: Finding["review"]) {
 function statusLabel(status: Finding["status"]) {
   switch (status) {
     case "citaat_gecontroleerd":
-      return "Citaat gecontroleerd";
+      return "Quote verified";
     case "tegenstrijdig":
-      return "Tegenstrijdige passages";
+      return "Conflicting passages";
     default:
-      return "Onzeker";
+      return "Uncertain";
   }
 }
 
 function factLabel(answer: Snapshot["casus"]["facts"][number]["answer"]) {
-  return answer === "ja" ? "Ja" : answer === "nee" ? "Nee" : "Onbekend";
+  return answer === "ja" ? "Yes" : answer === "nee" ? "No" : "Unknown";
 }
 
 function decisionLabel(decision: Finding["conflict_decision"]) {
   switch (decision) {
     case "deze":
-      return "Deze passage gekozen";
+      return "This passage selected";
     case "andere":
-      return "Andere passage gekozen";
+      return "Other passage selected";
     case "onzeker_vermelden":
-      return "Als onzeker vermeld";
+      return "Reported as uncertain";
     case "weglaten":
-      return "Weggelaten";
+      return "Omitted";
     default:
-      return "Geen beslissing bewaard";
+      return "No decision saved";
+  }
+}
+
+function levelLabel(level: Snapshot["sources"][number]["level"]) {
+  switch (level) {
+    case "federaal":
+      return "Federal";
+    case "vlaams":
+      return "Flemish";
+    case "provinciaal":
+      return "Provincial";
+    case "gemeentelijk":
+      return "Municipal";
+  }
+}
+
+function natureLabel(nature: Snapshot["sources"][number]["nature"]) {
+  return nature === "wetgeving" ? "Legislation" : "Guidance";
+}
+
+function verdictLabel(
+  verdict: Snapshot["verdicts"][number]["verdict"] | undefined,
+) {
+  switch (verdict) {
+    case "gecontroleerd":
+      return "Source checks passed";
+    case "onzeker":
+      return "Uncertain";
+    case "niet_gebruikt":
+      return "Not used";
+    default:
+      return "Not saved";
   }
 }
 
 async function readApiError(response: Response) {
-  const fallback = `De aanvraag is mislukt (${response.status}).`;
+  const fallback = `The request failed (${response.status}).`;
 
   try {
     const body = (await response.json()) as Partial<ApiError>;
@@ -119,7 +151,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
         const data = (await response.json()) as AnswerResponse;
         if (!data?.answer?.id) {
-          throw new Error("De server gaf geen geldig antwoord terug.");
+          throw new Error("The server returned invalid answer data.");
         }
         setState({ status: "ready", response: data });
       } catch (error) {
@@ -129,7 +161,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
           message:
             error instanceof Error
               ? error.message
-              : "Het antwoord kon niet worden geladen.",
+              : "The answer could not be loaded.",
         });
       }
     }
@@ -181,7 +213,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
       const data = (await response.json()) as AnswerResponse;
       if (!data?.answer?.id) {
-        throw new Error("De server gaf geen geldige nieuwe versie terug.");
+        throw new Error("The server returned an invalid new version.");
       }
       setAction({ status: "success", answerId: data.answer.id });
     } catch (error) {
@@ -190,7 +222,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
         message:
           error instanceof Error
             ? error.message
-            : "De nieuwe versie kon niet worden gemaakt.",
+            : "The new version could not be created.",
         blockers: [],
       });
     }
@@ -200,8 +232,8 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
     return (
       <main className={styles.page}>
         <div className={styles.stateBox} role="status">
-          <strong>Momentopname laden…</strong>
-          Het goedgekeurde antwoord wordt opgehaald.
+          <strong>Loading snapshot…</strong>
+          Retrieving the approved answer.
         </div>
       </main>
     );
@@ -211,12 +243,12 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
     return (
       <main className={styles.page}>
         <div className={`${styles.stateBox} ${styles.errorBox}`} role="alert">
-          <strong>Antwoord niet beschikbaar</strong>
+          <strong>Answer unavailable</strong>
           {state.message}
         </div>
         <div className={styles.actionRow}>
           <Link className={styles.secondaryLink} href="/historiek">
-            Terug naar historiek
+            Back to answer history
           </Link>
         </div>
       </main>
@@ -229,33 +261,33 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
       <main className={styles.page}>
         <header className={styles.pageHeader}>
           <div>
-            <p className={styles.eyebrow}>Historiek</p>
-            <h1>{isDraft ? "Conceptversie" : "Geen momentopname"}</h1>
+            <p className={styles.eyebrow}>Answer history</p>
+            <h1>{isDraft ? "Draft version" : "No snapshot"}</h1>
           </div>
           <Link className={styles.secondaryLink} href="/historiek">
-            Terug naar historiek
+            Back to answer history
           </Link>
         </header>
         <div className={`${styles.stateBox} ${styles.warningBox}`} role="status">
           <strong>
             {isDraft
-              ? "Deze versie is nog niet goedgekeurd."
-              : "De goedgekeurde momentopname ontbreekt."}
+              ? "This version has not yet been approved."
+              : "The approved snapshot is missing."}
           </strong>
           {isDraft
-            ? "Historiek toont alleen de bewaarde inhoud van goedgekeurde versies. Open het concept in de werkruimte om verder te gaan."
-            : "De actuele antwoordgegevens worden bewust niet als vervanging getoond. Zo blijft de historiek controleerbaar."}
+            ? "Answer history only shows the saved content of approved versions. Open the draft in the workspace to continue."
+            : "Current answer data is deliberately not shown as a substitute. This keeps the history auditable."}
         </div>
         {isDraft ? (
           <div className={styles.actionRow}>
             <p className={styles.actionInfo}>
-              Concept {state.response.answer.id}, revisie {state.response.answer.revision}
+              Draft {state.response.answer.id}, revision {state.response.answer.revision}
             </p>
             <Link
               className={styles.primaryLink}
               href={`/?answer=${encodeURIComponent(state.response.answer.id)}`}
             >
-              Open concept in werkruimte
+              Open draft in workspace
             </Link>
           </div>
         ) : null}
@@ -268,56 +300,56 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
       <header className={styles.detailHeader}>
         <div className={styles.headerTopline}>
           <div>
-            <p className={styles.eyebrow}>Goedgekeurd antwoord</p>
+            <p className={styles.eyebrow}>Approved answer</p>
             <h1>{snapshot.casus.question}</h1>
           </div>
           <Link className={styles.secondaryLink} href="/historiek">
-            Terug naar historiek
+            Back to answer history
           </Link>
         </div>
         <p className={styles.snapshotNotice}>
-          Dit is de onveranderlijke momentopname van revisie {snapshot.revision},
-          bewaard bij goedkeuring. Huidige brongegevens worden hier niet gebruikt.
+          This is the immutable snapshot of revision {snapshot.revision}, saved
+          at approval. Current source data is not used here.
         </p>
         <dl className={styles.metaGrid}>
           <div className={styles.metaItem}>
-            <dt>Goedgekeurd door</dt>
+            <dt>Approved by</dt>
             <dd>{snapshot.approved_by}</dd>
           </div>
           <div className={styles.metaItem}>
-            <dt>Goedgekeurd op</dt>
+            <dt>Approved on</dt>
             <dd>{formatDate(snapshot.approved_at)}</dd>
           </div>
           <div className={styles.metaItem}>
-            <dt>Momentopname</dt>
+            <dt>Snapshot taken</dt>
             <dd>{formatDate(snapshot.taken_at)}</dd>
           </div>
           <div className={styles.metaItem}>
-            <dt>Versie</dt>
-            <dd>Revisie {snapshot.revision}</dd>
+            <dt>Version</dt>
+            <dd>Revision {snapshot.revision}</dd>
           </div>
         </dl>
       </header>
 
       <section className={styles.section}>
-        <h2>Casus</h2>
+        <h2>Case</h2>
         <dl className={styles.caseGrid}>
           <div className={styles.caseItem}>
-            <dt>Gemeente</dt>
+            <dt>Municipality</dt>
             <dd>{snapshot.casus.municipality}</dd>
           </div>
           <div className={styles.caseItem}>
-            <dt>Casusdatum</dt>
+            <dt>Case date</dt>
             <dd>{formatDate(snapshot.casus.date, false)}</dd>
           </div>
           <div className={styles.caseItem}>
-            <dt>Activiteit</dt>
-            <dd>{snapshot.casus.activity || "Niet ingevuld"}</dd>
+            <dt>Activity</dt>
+            <dd>{snapshot.casus.activity || "Not provided"}</dd>
           </div>
         </dl>
 
         {snapshot.casus.facts.length > 0 ? (
-          <ul className={styles.factList} aria-label="Casusfeiten">
+          <ul className={styles.factList} aria-label="Case facts">
             {snapshot.casus.facts.map((fact) => (
               <li key={fact.id}>
                 <span>{fact.question}</span>
@@ -329,13 +361,13 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
       </section>
 
       <section className={styles.section}>
-        <h2>Bevindingen en beoordeling</h2>
+        <h2>Findings and review</h2>
         <p className={styles.sectionLead}>
-          De teksten, citaten en beoordelingen hieronder komen uitsluitend uit de
-          goedgekeurde momentopname.
+          The statements, quotes and reviews below come exclusively from the
+          approved snapshot.
         </p>
         {snapshot.findings.length === 0 ? (
-          <p>In deze versie zijn geen bevindingen bewaard.</p>
+          <p>No findings were saved in this version.</p>
         ) : (
           <ol className={styles.findingList}>
             {snapshot.findings.map((finding) => (
@@ -365,13 +397,13 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
                   {finding.review === "gecorrigeerd" ? (
                     <p className={styles.originalStatement}>
-                      Oorspronkelijke bevinding: {finding.statement}
+                      Original finding: {finding.statement}
                     </p>
                   ) : null}
 
                   <p className={styles.detailLine}>
-                    Automatische status: {statusLabel(finding.status)}
-                    {finding.bulk ? " · in bulk bevestigd" : ""}
+                    Automated status: {statusLabel(finding.status)}
+                    {finding.bulk ? " · confirmed in bulk" : ""}
                   </p>
 
                   {finding.status_reasons.length > 0 ? (
@@ -384,31 +416,31 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
                   {finding.condition ? (
                     <p className={styles.detailLine}>
-                      <strong>Voorwaarde:</strong> {finding.condition.quote}
+                      <strong>Condition:</strong> {finding.condition.quote}
                       {!finding.condition.quote_checked
-                        ? " — tekst niet door citaatcontrole bevestigd"
+                        ? " — text not confirmed by quote verification"
                         : ""}
                     </p>
                   ) : null}
 
                   {finding.review_reason ? (
                     <p className={styles.detailLine}>
-                      <strong>Reden beoordeling:</strong> {finding.review_reason}
+                      <strong>Review reason:</strong> {finding.review_reason}
                     </p>
                   ) : null}
 
                   {finding.reviewed_by || finding.reviewed_at ? (
                     <p className={styles.detailLine}>
-                      Beoordeeld door {finding.reviewed_by || "onbekend"}
+                      Reviewed by {finding.reviewed_by || "unknown"}
                       {finding.reviewed_at
-                        ? ` op ${formatDate(finding.reviewed_at)}`
+                        ? ` on ${formatDate(finding.reviewed_at)}`
                         : ""}
                     </p>
                   ) : null}
 
                   {finding.status === "tegenstrijdig" ? (
                     <p className={styles.detailLine}>
-                      <strong>Beslissing bij conflict:</strong>{" "}
+                      <strong>Conflict decision:</strong>{" "}
                       {decisionLabel(finding.conflict_decision)}
                       {finding.conflict_reason
                         ? ` — ${finding.conflict_reason}`
@@ -418,7 +450,7 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                 </div>
 
                 {finding.citations.length > 0 ? (
-                  <ul className={styles.citationList} aria-label="Citaten">
+                  <ul className={styles.citationList} aria-label="Quotes">
                     {finding.citations.map((citation, index) => {
                       const passage = passageById.get(citation.passage_id);
                       const source = passage
@@ -429,9 +461,9 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                           className={styles.citation}
                           key={`${citation.passage_id}-${index}`}
                         >
-                          <h3>{source?.short_title || "Bron in momentopname"}</h3>
+                          <h3>{source?.short_title || "Source in snapshot"}</h3>
                           <p className={styles.sourceMeta}>
-                            {passage?.article || "Geen artikel vermeld"}
+                            {passage?.article || "No article specified"}
                             {passage
                               ? ` · p. ${passage.page_from}${
                                   passage.page_to !== passage.page_from
@@ -456,17 +488,17 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
       {snapshot.not_found.length > 0 ? (
         <section className={styles.section}>
-          <h2>Niet gevonden in beschikbare bronnen</h2>
+          <h2>Not found in the available sources</h2>
           <ul className={styles.missingList}>
             {snapshot.not_found.map((item) => (
               <li key={item.subquestion}>
                 <span>{item.subquestion}</span>
                 <span className={styles.valueLabel}>
                   {item.decision === "vermelden"
-                    ? "Vermeld"
+                    ? "Included"
                     : item.decision === "weglaten"
-                      ? "Weggelaten"
-                      : "Geen beslissing"}
+                      ? "Omitted"
+                      : "No decision"}
                 </span>
               </li>
             ))}
@@ -475,12 +507,12 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
       ) : null}
 
       <section className={styles.section}>
-        <h2>Bronversies</h2>
+        <h2>Source versions</h2>
         <p className={styles.sectionLead}>
-          Vastgelegde versies en broncontroles op het moment van goedkeuring.
+          Saved versions and source checks at the time of approval.
         </p>
         {snapshot.sources.length === 0 ? (
-          <p>Geen bronversies bewaard.</p>
+          <p>No source versions were saved.</p>
         ) : (
           <div className={styles.sourceGrid}>
             {snapshot.sources.map((source) => {
@@ -490,15 +522,15 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
                   <div className={styles.cardTopline}>
                     <h3>{source.title}</h3>
                     <span className={styles.hash}>
-                      {source.sha256 ? source.sha256.slice(0, 8) : "geen hash"}
+                      {source.sha256 ? source.sha256.slice(0, 8) : "no hash"}
                     </span>
                   </div>
                   <p className={styles.sourceMeta}>
-                    {source.short_title} · {source.level} · {source.nature} ·{" "}
-                    {source.territory}
+                    {source.short_title} · {levelLabel(source.level)} ·{" "}
+                    {natureLabel(source.nature)} · {source.territory}
                   </p>
                   <p className={styles.detailLine}>
-                    Broncontrole: {verdict?.verdict || "niet bewaard"}
+                    Source check: {verdictLabel(verdict?.verdict)}
                   </p>
                   {verdict?.reasons.length ? (
                     <ul className={styles.reasonList}>
@@ -515,13 +547,13 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
       </section>
 
       <section className={styles.section}>
-        <h2>Goedgekeurd antwoord</h2>
-        <pre className={styles.reply}>{snapshot.reply_text || "Geen antwoordtekst bewaard."}</pre>
+        <h2>Approved answer</h2>
+        <pre className={styles.reply}>{snapshot.reply_text || "No answer text was saved."}</pre>
       </section>
 
       {action.status === "error" ? (
         <div className={`${styles.inlineMessage} ${styles.errorBox}`} role="alert">
-          <strong>Nieuwe versie niet gemaakt</strong>
+          <strong>New version not created</strong>
           {action.message}
           {action.blockers.length > 0 ? (
             <ul className={styles.errorList}>
@@ -535,23 +567,23 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
 
       {action.status === "success" ? (
         <div className={`${styles.inlineMessage} ${styles.successBox}`} role="status">
-          <strong>Nieuwe conceptversie gemaakt</strong>
-          De goedgekeurde versie blijft ongewijzigd. Het nieuwe concept kan nu in
-          de werkruimte worden beoordeeld.
+          <strong>New draft version created</strong>
+          The approved version remains unchanged. The new draft can now be
+          reviewed in the workspace.
         </div>
       ) : null}
 
       <div className={styles.actionRow}>
         <p className={styles.actionInfo}>
-          Vorige antwoorden zijn context, geen bewijs. Een nieuwe versie hergebruikt
-          nooit automatisch goedgekeurde tekst.
+          Previous answers provide context, not evidence. A new version never
+          reuses approved text automatically.
         </p>
         {action.status === "success" ? (
           <Link
             className={styles.primaryLink}
             href={`/?answer=${encodeURIComponent(action.answerId)}`}
           >
-            Open nieuwe conceptversie
+            Open new draft version
           </Link>
         ) : (
           <button
@@ -561,8 +593,8 @@ export function HistoryDetail({ answerId }: { answerId: string }) {
             type="button"
           >
             {action.status === "saving"
-              ? "Nieuwe versie maken…"
-              : "Maak nieuwe versie"}
+              ? "Creating new version…"
+              : "Create new version"}
           </button>
         )}
       </div>

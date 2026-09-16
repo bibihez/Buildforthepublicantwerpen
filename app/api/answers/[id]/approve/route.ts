@@ -12,13 +12,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const { id } = await ctx.params;
   try {
     const answer = getAnswer(id);
-    if (!answer) return fail('Antwoord niet gevonden', 404);
+    if (!answer) return fail('Answer not found', 404);
     const body = await readJson<ApproveRequest>(request);
     const approvedBy = body.approved_by?.trim();
-    if (!approvedBy) return fail('Naam van de medewerker ontbreekt', 400);
+    if (!approvedBy) return fail('Officer name is missing', 400);
 
     const blockers = getApproveBlockers(answer, body.revision);
-    if (blockers.length) return fail('Goedkeuren kan nog niet', 409, { blockers });
+    if (blockers.length) return fail('This answer cannot be approved yet', 409, { blockers });
 
     const now = new Date().toISOString();
     const approved = approve(answer, buildSnapshot(answer, listSources(), listPassages(), approvedBy, now));

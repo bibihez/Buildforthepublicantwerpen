@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export async function GET(_request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const answer = getAnswer(id);
-  if (!answer) return fail('Antwoord niet gevonden', 404);
+  if (!answer) return fail('Answer not found', 404);
   return Response.json(toResponse(answer));
 }
 
@@ -18,7 +18,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   const { id } = await ctx.params;
   try {
     const answer = getAnswer(id);
-    if (!answer) return fail('Antwoord niet gevonden', 404);
+    if (!answer) return fail('Answer not found', 404);
     const body = await readJson<UpdateAnswerRequest>(request);
     const next = applyUpdate(answer, body, new Date().toISOString());
     saveAnswer(next);

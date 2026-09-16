@@ -14,12 +14,12 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'Ongeldige aanvraag' } satisfies ApiError, { status: 400 });
+    return Response.json({ error: 'Invalid request' } satisfies ApiError, { status: 400 });
   }
   const question = body?.question?.trim();
-  if (!question) return Response.json({ error: 'Geen vraag opgegeven' } satisfies ApiError, { status: 400 });
+  if (!question) return Response.json({ error: 'No question provided' } satisfies ApiError, { status: 400 });
   if (body.date && !/^\d{4}-\d{2}-\d{2}$/.test(body.date)) {
-    return Response.json({ error: 'Datum moet de vorm JJJJ-MM-DD hebben' } satisfies ApiError, { status: 400 });
+    return Response.json({ error: 'Date must use the YYYY-MM-DD format' } satisfies ApiError, { status: 400 });
   }
   try {
     const answer = await createAnswer(question, body.date);
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('POST /api/answers failed', err);
     return Response.json(
-      { error: 'Geen bevindingen opgesteld. De gevonden passages staan hieronder.', fallback: safeFallback({ question, date: body.date }) } satisfies ApiError,
+      { error: 'No findings were produced. The retrieved passages are shown below.', fallback: safeFallback({ question, date: body.date }) } satisfies ApiError,
       { status: 502 },
     );
   }
