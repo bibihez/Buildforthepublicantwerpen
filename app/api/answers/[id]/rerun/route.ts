@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 /** Same pipeline without AI ①: the officer's case (facts, date, subquestions) is taken as given. */
-export async function POST(request: Request, ctx: RouteContext<'/api/answers/[id]/rerun'>) {
+export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   const existing = getAnswer(id);
   if (!existing) return Response.json({ error: 'Antwoord niet gevonden' } satisfies ApiError, { status: 404 });

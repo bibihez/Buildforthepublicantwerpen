@@ -3,6 +3,7 @@ import config from '../config/schoten.json';
 import { getPassage, listPassages, listSourceEvents, listSources, saveAnswer } from './db';
 import { CaseDraftSchema, ground, RawFindingsSchema } from './ground';
 import { callJson, loadPrompt, models } from './llm';
+import { passageIdsOf } from './snapshot';
 import { buildIndex, findCandidates, type SearchIndex } from './search';
 import type { Answer, AnswerResponse, Casus, Passage, Source } from './types';
 import { verdictsFor } from './verdict';
@@ -99,11 +100,7 @@ export async function createAnswer(question: string, date?: string): Promise<Ans
 export function toResponse(answer: Answer): AnswerResponse {
   const sources: Record<string, Source> = {};
   for (const s of listSources()) sources[s.id] = s;
-  const ids = new Set<string>([
-    ...answer.candidates,
-    ...answer.findings.flatMap((f) => [...f.citations.map((c) => c.passage_id), ...(f.conflict_with ? [f.conflict_with.passage_id] : [])]),
-    ...answer.not_used.map((n) => n.passage_id),
-  ]);
+  const ids = new Set<string>([...answer.candidates, ...passageIdsOf(answer)]);
   const passages: Record<string, Passage> = {};
   for (const id of ids) {
     const p = getPassage(id);
