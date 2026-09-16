@@ -1,57 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ApiError, WebSearchResponse } from "@/lib/types";
 
-/** Web search finds candidate documents. Nothing here is evidence until the officer uploads it under Sources. */
-export function WebSearchPanel({ question }: { question: string }) {
-  const [allDomains, setAllDomains] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<WebSearchResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+type Outcome = { key: string; result: WebSearchResponse | null; error: string | null };
 
-  const search = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/web-search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, all_domains: allDomains }),
+async function runSearch(question: string, allDomains: boolean): Promise<WebSearchResponse> {
+  const response = await fetch("/api/web-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, all_domains: allDomains }),
+  });
+  const body = (await response.json()) as WebSearchResponse | ApiError;
+  if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Search failed");
+  return body;
+}
+
+/** Government sites first; only when they cite nothing, the wider web (marked as non-government). */
+async function searchWithFallback(question: string): Promise<WebSearchResponse> {
+  const official = await runSearch(question, false);
+  return official.results.length ? official : runSearch(question, true);
+}
+
+/**
+ * Runs by itself once per analysis (`runKey`). Results are leads, never evidence: a document only counts after an
+ * officer uploads it under Sources.
+ */
+export function WebSearchPanel({ question, runKey }: { question: string; runKey: string }) {
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
+
+  useEffect(() => {
+    if (!question.trim()) return;
+    let cancelled = false;
+    searchWithFallback(question)
+      .then((result) => {
+        if (!cancelled) setOutcome({ key: runKey, result, error: null });
+      })
+      .catch((caught: unknown) => {
+        if (!cancelled) setOutcome({ key: runKey, result: null, error: caught instanceof Error ? caught.message : "Search failed" });
       });
-      const body = (await response.json()) as WebSearchResponse | ApiError;
-      if (!response.ok || "error" in body) throw new Error("error" in body ? body.error : "Search failed");
-      setResult(body);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Search failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [runKey, question]);
+
+  const current = outcome?.key === runKey ? outcome : null;
+  const result = current?.result ?? null;
 
   return (
-    <section className="panel web-search-panel" aria-labelledby="web-search-heading">
+    <section className="panel web-search-panel" aria-labelledby="web-search-heading" aria-busy={!current}>
       <div className="panel-heading compact">
         <div>
           <p className="eyebrow">Find sources</p>
-          <h2 id="web-search-heading">Search the web</h2>
+          <h2 id="web-search-heading">Found on the web</h2>
         </div>
-        <div className="button-row">
-          <label className="muted web-search-toggle">
-            <input type="checkbox" checked={allDomains} onChange={(event) => setAllDomains(event.target.checked)} disabled={loading} />{" "}
-            Include non-government websites
-          </label>
-          <button type="button" className="button button-secondary button-small" onClick={search} disabled={loading || !question.trim()}>
-            {loading ? "Searching…" : "Search official documents"}
-          </button>
-        </div>
+        {!current ? <span className="muted">Searching…</span> : null}
       </div>
       <p className="hint">
         Web result—not verified and not evidence. A document only counts after an officer uploads it under Sources.
       </p>
-      {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {current?.error ? <div className="error-banner" role="alert">{current.error}</div> : null}
       {result ? (
         <div className="web-search-result">
+          {result.all_domains ? (
+            <p className="muted">Nothing found on government websites, so the wider web was searched.</p>
+          ) : null}
           <p className="web-search-summary">{result.summary}</p>
           {result.results.length ? (
             <ol className="web-search-list">

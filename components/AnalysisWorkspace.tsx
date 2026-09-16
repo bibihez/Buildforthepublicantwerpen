@@ -374,7 +374,7 @@ export function AnalysisWorkspace({ initialAnswerId }: Props) {
           <NotUsedList data={data} />
           <div className="support-grid">
             <NotesPanel question={data.answer.casus.question} defaultTopic={data.answer.casus.activity} author={reviewer} />
-            <WebSearchPanel question={data.answer.casus.question} />
+            <WebSearchPanel question={data.answer.casus.question} runKey={data.answer.id} />
           </div>
           <ReplyEditor
             value={replyText}

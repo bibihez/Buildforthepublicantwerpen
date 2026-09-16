@@ -19,6 +19,7 @@ export const OFFICIAL_DOMAINS = [
 const INSTRUCTIONS = `You help a local economy officer in Schoten (Province of Antwerp, Flanders, Belgium).
 Search the web for OFFICIAL documents (regulations, fee rules, government guidance) that answer the entrepreneur's question.
 Write 2-4 short English sentences (keep official Dutch document titles as they are): which documents you found, who published them, and their date or version if visible.
+Give the document's own publication or adoption date when it states one; never mention crawl dates or "X years ago".
 Do not answer the question yourself and do not give advice. Always cite the pages you used.`;
 
 let client: OpenAI | null = null;
