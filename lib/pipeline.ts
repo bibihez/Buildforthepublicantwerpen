@@ -7,7 +7,7 @@ import { compare, findPrecedent } from './precedent';
 import { buildReply } from './reply';
 import { passageIdsOf } from './snapshot';
 import { buildIndex, findCandidates, type SearchIndex } from './search';
-import type { Answer, AnswerResponse, Casus, Passage, Source } from './types';
+import type { Answer, AnswerResponse, ApiError, Casus, Passage, Source } from './types';
 import { verdictsFor } from './verdict';
 
 let index: SearchIndex | null = null;
@@ -114,4 +114,24 @@ export function toResponse(answer: Answer): AnswerResponse {
     if (p) passages[id] = p;
   }
   return { answer, sources, passages };
+}
+
+/** When an AI call fails: search results from checked sources only, so the officer can still read the evidence. */
+export function fallbackFor(casus: Pick<Casus, 'question'> & Partial<Casus>): NonNullable<ApiError['fallback']> {
+  const sources = listSources();
+  const full: Casus = {
+    question: casus.question,
+    municipality: config.municipality,
+    date: casus.date || today(),
+    activity: casus.activity ?? '',
+    subquestions: casus.subquestions ?? [],
+    facts: casus.facts ?? [],
+  };
+  const verdicts = verdictsFor(sources, full, config, listSourceEvents());
+  const { candidates } = findCandidates(full, verdicts, getIndex());
+  return {
+    candidate_ids: candidates.map((p) => p.id),
+    sources: Object.fromEntries(sources.map((s) => [s.id, s])),
+    passages: Object.fromEntries(candidates.map((p) => [p.id, p])),
+  };
 }

@@ -1,5 +1,5 @@
 import { getAnswer } from '@/lib/db';
-import { analyse, toResponse } from '@/lib/pipeline';
+import { analyse, fallbackFor, toResponse } from '@/lib/pipeline';
 import type { ApiError, RerunRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -30,6 +30,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     return Response.json(toResponse(answer));
   } catch (err) {
     console.error('POST /api/answers/[id]/rerun failed', err);
-    return Response.json({ error: 'Geen bevindingen opgesteld. Probeer opnieuw.' } satisfies ApiError, { status: 502 });
+    let fallback: ApiError['fallback'];
+    try {
+      fallback = fallbackFor(body.casus);
+    } catch {
+      fallback = undefined;
+    }
+    return Response.json({ error: 'Geen bevindingen opgesteld. De gevonden passages staan hieronder.', fallback } satisfies ApiError, { status: 502 });
   }
 }

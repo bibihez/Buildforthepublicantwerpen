@@ -1,5 +1,5 @@
 import { listAnswers } from '@/lib/db';
-import { createAnswer, toResponse } from '@/lib/pipeline';
+import { createAnswer, fallbackFor, toResponse } from '@/lib/pipeline';
 import type { ApiError, CreateAnswerRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -26,6 +26,18 @@ export async function POST(request: Request) {
     return Response.json(toResponse(answer));
   } catch (err) {
     console.error('POST /api/answers failed', err);
-    return Response.json({ error: 'Geen bevindingen opgesteld. Probeer opnieuw.' } satisfies ApiError, { status: 502 });
+    return Response.json(
+      { error: 'Geen bevindingen opgesteld. De gevonden passages staan hieronder.', fallback: safeFallback({ question, date: body.date }) } satisfies ApiError,
+      { status: 502 },
+    );
+  }
+}
+
+function safeFallback(casus: Parameters<typeof fallbackFor>[0]): ApiError['fallback'] {
+  try {
+    return fallbackFor(casus);
+  } catch (err) {
+    console.error('fallback search failed', err);
+    return undefined;
   }
 }

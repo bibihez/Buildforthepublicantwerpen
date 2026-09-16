@@ -201,4 +201,12 @@ export type ApproveBlocker = {
   ref?: string;                      // finding id or subquestion
 };
 
-export type ApiError = { error: string; blockers?: ApproveBlocker[] };
+export type ApiError = {
+  error: string;
+  blockers?: ApproveBlocker[];
+  /**
+   * Only on a failed AI call (502) from POST /api/answers or /rerun: the passages search found from checked
+   * sources, so the officer can still work. candidate_ids keeps search order. Nothing here is a finding.
+   */
+  fallback?: { candidate_ids: string[]; sources: Record<string, Source>; passages: Record<string, Passage> };
+};
