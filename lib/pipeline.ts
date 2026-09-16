@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import config from '../config/schoten.json';
-import { getPassage, listPassages, listSourceEvents, listSources, saveAnswer } from './db';
+import { getPassage, listAnswers, listPassages, listSourceEvents, listSources, saveAnswer } from './db';
 import { CaseDraftSchema, ground, RawFindingsSchema } from './ground';
 import { callJson, loadPrompt, models } from './llm';
+import { compare, findPrecedent } from './precedent';
 import { buildReply } from './reply';
 import { passageIdsOf } from './snapshot';
 import { buildIndex, findCandidates, type SearchIndex } from './search';
@@ -79,7 +80,7 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
     findings: grounded.findings,
     not_found: grounded.not_found,
     not_used: notUsed,
-    precedent: base.precedent ?? null,
+    precedent: null,
     reply_text: '',
     reply_stale: false,
     status: 'concept',
@@ -88,6 +89,10 @@ export async function analyse(casus: Casus, base: Partial<Answer> = {}): Promise
     models: { case: base.models?.case ?? models.fast(), findings: models.strong() },
     snapshot: null,
   };
+  // After the findings exist, and never given to the AI.
+  const precedent = findPrecedent(casus.question, listAnswers(), { excludeId: answer.id });
+  const passageSource = new Map(candidates.map((p) => [p.id, p.source_id]));
+  answer.precedent = precedent ? compare(precedent, answer, sources, (id) => passageSource.get(id)) : null;
   answer.reply_text = buildReply(answer);
   saveAnswer(answer);
   return answer;
